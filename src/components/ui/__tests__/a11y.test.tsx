@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react-native';
-import { Button, CalendarDay, Chip, IntensitySlider, MicButton } from '@/components/ui';
+import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
+import { Button, CalendarDay, Chip, IntensitySlider, MicButton, PatternCard } from '@/components/ui';
+import { describeEvent } from '@/lib/describeEvent';
+import type { StoredEvent } from '@/lib/schema';
 
 jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn(() => Promise.resolve()),
@@ -16,6 +18,23 @@ function Slider() {
 }
 
 describe('accesibilidad de componentes', () => {
+  it('PatternCard abre el detalle al tocarla (antes no tenía onPress)', async () => {
+    const onPress = jest.fn();
+    await render(<PatternCard level="strong" statement="El 95 % de tus molestias…" evidence="18 de 19 episodios" onPress={onPress} />);
+    // userEvent simula un toque real: fireEvent.press encontraría el onPress de PatternCard aunque el Pressable no lo tuviera
+    await userEvent.setup().press(screen.getByRole('button'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('describeEvent no repite la zona cuando el nombre del síntoma ya la dice', () => {
+    const base = { type: 'symptom', occurred_at: '2026-10-18T15:00:00.000Z', occurred_at_precision: 'exact', confidence: 1, source_text: '' };
+    const data = { side: null, intensity_0_10: 7, intensity_inferred: false, character: null, duration_minutes: null };
+    const head = { ...base, data: { ...data, name: 'dolor de cabeza', body_location: 'cabeza' } } as unknown as StoredEvent;
+    const belly = { ...base, data: { ...data, name: 'dolor', body_location: 'abdomen' } } as unknown as StoredEvent;
+    expect(describeEvent(head).detail).toBeUndefined();
+    expect(describeEvent(belly).detail).toBe('abdomen');
+  });
+
   it('IntensitySlider es "adjustable" y anuncia número + palabra', async () => {
     await render(<Slider />);
     const slider = screen.getByRole('adjustable', { name: '¿Qué tan fuerte?' });

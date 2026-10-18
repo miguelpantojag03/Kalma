@@ -46,6 +46,7 @@ export function PatternCard({ level, statement, evidence, isNew, dismissed, onPr
   return (
     <Pressable
       disabled={!onPress}
+      onPress={onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={`${isNew ? 'Nuevo. ' : ''}Confianza ${PATTERN_LEVEL_LABEL[level]}. ${statement} ${evidence}.${dismissed ? ' Marcado como no útil.' : ''}`}
       accessibilityHint={onPress ? 'Abre el detalle con los números y los días' : undefined}
