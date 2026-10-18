@@ -91,6 +91,17 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c2d043d6-a8b8-4bcb-a9da-5cc1ed1611a7"
+      }
+    },
+    "owner": "miguelpantojag",
+    "runtimeVersion": "exposdk:57.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/c2d043d6-a8b8-4bcb-a9da-5cc1ed1611a7"
     }
   }
 }
