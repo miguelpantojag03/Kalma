@@ -20,6 +20,7 @@ import { useKalma } from '@/lib/store';
 import { extractEntry } from '@/mocks/extractEntry';
 import { LISTENING_HINTS, SAMPLE_TRANSCRIPTS } from '@/mocks/transcripts';
 import { layout, space } from '@/theme';
+import { understandEntry, type Engine } from '@/lib/ai';
 import { ConfirmView } from './ConfirmView';
 import { SavedView } from './SavedView';
 
@@ -62,6 +63,7 @@ export function RecordScreen() {
       : params.modo === 'texto' ? { k: 'text' } : { k: 'start' },
   );
   const [examplesOpen, setExamplesOpen] = useState(false);
+  const [engine, setEngine] = useState<Engine | undefined>(undefined);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [typed, setTyped] = useState('');
   // Momento del registro: ref para los cálculos en callbacks, estado para mostrarlo.
@@ -97,7 +99,9 @@ export function RecordScreen() {
         return;
       }
       setPhase({ k: 'processing', transcript: text });
-      const extraction = await extractEntry(text, { recordedAt: recordedAt.current.toISOString() });
+      // IA real con respaldo local (D81): si Gemini falla o no está configurada, entiende el celular
+      const { extraction, engine } = await understandEntry(text, recordedAt.current);
+      setEngine(engine);
       if (extraction.events.length === 0) {
         setPhase({ k: 'error', kind: 'not-understood', transcript: text });
         return;
@@ -221,6 +225,7 @@ export function RecordScreen() {
             extraction={phase.extraction}
             transcript={phase.transcript}
             recordedAt={recordedAtShown}
+            engine={engine}
             onAddMore={(extra) => void process(`${phase.transcript}, ${extra}`, phase.source)}
             onSave={(events) => save(events, phase)}
             onDiscard={close}

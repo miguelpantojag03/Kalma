@@ -203,7 +203,7 @@ function ConsentStep({ name, value, onChange }: { name: string; value: { health:
         onChange={(v) => onChange({ ...value, ai: v })}
         requirement="required"
         label="Entender lo que digo con IA"
-        description="Para convertir tu voz o texto en registros. En este prototipo se procesa en el celular."
+        description="Para convertir tu voz o texto en registros. Solo el texto que dictas (sin tu nombre) se envía a Google Gemini; en su versión gratuita, Google puede usarlo para mejorar sus productos. Si no hay conexión, se entiende en el celular."
       />
       <Checkbox
         checked={value.location}
