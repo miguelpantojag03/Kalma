@@ -49,3 +49,13 @@ example
 
 # CLI de Supabase (archivos temporales)
 supabase/.temp/
+
+# Credenciales y builds: nunca al repositorio (es público)
+*.keystore
+google-services.json
+GoogleService-Info.plist
+service-account*.json
+credentials*.json
+*.apk
+*.aab
+*.ipa
