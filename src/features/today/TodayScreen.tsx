@@ -1,18 +1,20 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, View } from 'react-native';
 import { router, type Href } from 'expo-router';
-import { ChevronRight, FlaskConical, Plus } from 'lucide-react-native';
+import { ChevronRight, FlaskConical, Moon, Plus } from 'lucide-react-native';
 import { AdherenceToday } from '@/features/experiments/AdherenceToday';
 import { experimentDay } from '@/lib/experiments';
 import { Banner, Button, Card, EmptyState, KText, MicButton, ProgressRing } from '@/components/ui';
 import { Screen } from '@/components/Screen';
 import { dayKey } from '@/lib/dates';
+import { weekComparison, weekSummary } from '@/lib/insights';
 import { analysisProgress, daysThisWeek, eventsByDay } from '@/lib/selectors';
 import { useKalma } from '@/lib/store';
 import { space, useTheme } from '@/theme';
 import { DayTimeline } from './DayTimeline';
 import { NewPatternCard } from './NewPatternCard';
 import { QuickSymptomSheet } from './QuickSymptomSheet';
+import { CycleTodayCard, DailyMessageCard, PendingSyncNote } from './TodayExtras';
 
 function greeting(d = new Date()) {
   const h = d.getHours();
@@ -38,6 +40,7 @@ export function TodayScreen() {
   const todayEvents = useMemo(() => eventsByDay(entries).get(today) ?? [], [entries, today]);
   const progress = useMemo(() => analysisProgress(entries), [entries]);
   const week = useMemo(() => daysThisWeek(entries, now), [entries, now]);
+  const weekText = useMemo(() => weekComparison(weekSummary(entries, now)), [entries, now]);
   const checkinDone = useMemo(() => entries.some((e) => e.source === 'checkin' && dayKey(e.recordedAt) === today), [entries, today]);
   const showCheckin = now.getHours() >= 19 && !checkinDone;
 
@@ -57,6 +60,8 @@ export function TodayScreen() {
       subtitle={caregiver ? `Registrando por ${caregiver}` : 'Cuéntame cómo te fue hoy'}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primaryStrong} colors={[c.primaryStrong]} />}
     >
+      <PendingSyncNote />
+
       {showCheckin && (
         <Banner
           tone="reminder"
@@ -75,6 +80,12 @@ export function TodayScreen() {
       </Card>
 
       <Button variant="secondary" fullWidth label="Me empezó un síntoma" icon={(col) => <Plus size={20} color={col} />} onPress={() => setQuickOpen(true)} />
+      {/* Para una migraña en curso: pantalla oscura, sin animaciones (D73) */}
+      <Button variant="ghost" fullWidth label="Modo crisis: pantalla oscura" icon={(col) => <Moon size={20} color={col} />} onPress={() => router.push('/crisis' as Href)} />
+
+      {/* Después de registrar (lo principal): el mensaje del día y el ciclo */}
+      <DailyMessageCard now={now} />
+      <CycleTodayCard />
 
       <NewPatternCard />
 
@@ -109,7 +120,7 @@ export function TodayScreen() {
           {progress.ready ? (
             <>
               <KText variant="subheading">{week} de 7 días esta semana</KText>
-              <KText variant="small" tone="muted">{week >= 5 ? 'Vas muy bien. Cada registro hace más claros tus patrones.' : 'Cada registro cuenta, sin importar cuándo.'}</KText>
+              <KText variant="small" tone="muted">{weekText}</KText>
             </>
           ) : (
             <>

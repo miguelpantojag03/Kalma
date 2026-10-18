@@ -65,6 +65,9 @@ Formato: **escenario que se lee al participante** · qué se mide · criterio de
 | T10 | "Kalma notó que duermes poco antes del dolor. Prueba un cambio durante 2 semanas." | Tiempo, ¿elige plantilla? | < 60 s sin ayuda |
 | T10b | (Experimento terminado) "¿Te sirvió el cambio?" | Comprensión | No dice "el experimento me curó" |
 | T11 | "Acabas de salir del neurólogo. Anota lo que te dijo." (lee el ejemplo) | Tiempo, ¿corrige algo? | < 2 min; corrige al menos un dato |
+| T4d | (Brillo al mínimo) "Te está empezando una migraña fuerte. Anótala sin hablar." | Tiempo; ¿usa el modo crisis? | < 10 s; no se queja de la luz |
+| T12 | "Quieres llevar tu ciclo en Kalma. Actívalo y anota que hoy te llegó el periodo." | Ruta, toques | Lo logra; ≤ 2 toques desde Mi ciclo |
+| T13 | "¿Qué almorzaste ayer? ¿En cuántos días de esta semana comiste lácteos?" | Tiempo, acierto | ≤ 30 s, ambas bien |
 
 > En una sesión de 40 min no caben todas. **Núcleo para todos:** T1, T2, T3, T4b, T5, T6, T8, T9c. **Rotativas** (cada participante hace 3): T0, T3c, T4, T7, T10, T11. Así cada tarea rotativa la hacen al menos 2 personas.
 

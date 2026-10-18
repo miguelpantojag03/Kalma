@@ -52,7 +52,13 @@ npx supabase login
 npx supabase link --project-ref <tu-ref>      # el ref está en la URL del proyecto
 npx supabase db push                          # aplica supabase/migrations/
 ```
-O, sin CLI: abre **SQL Editor** en el panel, pega el contenido de [supabase/migrations/20261017000000_kalma_init.sql](supabase/migrations/20261017000000_kalma_init.sql) y ejecútalo.
+O, sin CLI: abre **SQL Editor** en el panel y ejecuta, **en orden**, el contenido de cada archivo:
+
+1. [20261017000000_kalma_init.sql](supabase/migrations/20261017000000_kalma_init.sql): tablas base, RLS y trigger del perfil.
+2. [20261018000000_kalma_fase9.sql](supabase/migrations/20261018000000_kalma_fase9.sql): experimentos con síntoma, médicos y visitas.
+3. [20261019000000_kalma_ciclo.sql](supabase/migrations/20261019000000_kalma_ciclo.sql): preferencia «registrar mi ciclo» en el perfil.
+
+Si falta alguna, la app sigue funcionando: lo de esa tabla queda en cola y se sube cuando la migración exista (D79).
 
 La migración crea 11 tablas (perfiles, consentimientos, condiciones, medicamentos, registros, eventos, contexto diario, preferencias de patrones, experimentos, reportes y recordatorios), todas con `user_id → auth.users on delete cascade`, **RLS activado** con políticas de select/insert/update/delete (`user_id = auth.uid()`) y el trigger que crea el perfil al registrarse.
 
@@ -132,5 +138,6 @@ node scripts/check-reflow.mjs   # reflujo a 320 px (con la app corriendo; ver do
 | 8 | Onboarding con consentimiento | ✅ |
 | 9 | Experimentos, Volví del médico, Ajustes completos, cuidador, biometría | ✅ |
 | 10 | Pulido (errores, 404, háptica), auditoría de accesibilidad, heurísticas, guion de prueba, build con EAS | ✅ |
+| 11 | Mensaje del día, ciclo menstrual opcional, comidas y consejos, modo crisis, resumen semanal, aviso de analgésicos, ayuda | ✅ |
 
 **Mejora futura:** inicio de sesión con Google (y Apple en iOS).

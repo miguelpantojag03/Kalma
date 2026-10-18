@@ -15,7 +15,7 @@ const label = (t: string) => { const h = Number(t.slice(0, 2)); return `${h > 12
 export function RemindersScreen() {
   const { c } = useTheme();
   const { profile, updateProfile } = useKalma();
-  const { checkinReminder, setCheckinReminder } = useDeviceSettings();
+  const { checkinReminder, setCheckinReminder, dailyMessage, setDailyMessage, morningMessage, setMorningMessage } = useDeviceSettings();
   const showToast = useToast((s) => s.show);
   const [perm, setPerm] = useState<NotifPermission | null>(null);
 
@@ -67,6 +67,36 @@ export function RemindersScreen() {
           </ChipGroup>
         </Card>
         <KText variant="small" tone="muted">Los experimentos te recuerdan 30 minutos antes del check-in, y los controles médicos el día anterior a las 9 a. m.</KText>
+
+        <Card style={{ gap: space[4] }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 48 }}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <KText variant="subheading">Mensaje del día</KText>
+              <KText variant="small" tone="muted">Una frase corta en Hoy para empezar el día. Sin rachas ni presión.</KText>
+            </View>
+            <Switch
+              accessibilityLabel="Mensaje del día en Hoy"
+              value={dailyMessage}
+              onValueChange={setDailyMessage}
+              trackColor={{ true: c.primaryStrong, false: c.borderStrong }}
+              thumbColor={c.surface}
+            />
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 48 }}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <KText variant="bodyStrong">Recibirlo también a las 8 a. m.</KText>
+              <KText variant="small" tone="muted">Como notificación. Apagado si prefieres menos avisos.</KText>
+            </View>
+            <Switch
+              accessibilityLabel="Mensaje del día como notificación a las 8 a. m."
+              value={morningMessage}
+              disabled={perm !== 'granted' || !dailyMessage}
+              onValueChange={setMorningMessage}
+              trackColor={{ true: c.primaryStrong, false: c.borderStrong }}
+              thumbColor={c.surface}
+            />
+          </View>
+        </Card>
       </Screen>
     </>
   );

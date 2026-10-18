@@ -246,6 +246,17 @@ async function migrateLegacy() {
   await AsyncStorage.removeItem(LEGACY_KEY);
 }
 
+/** Agrega a una demo vieja lo nuevo de la semilla (ciclo activado y sus periodos de ejemplo). */
+function upgradeDemo() {
+  const s = useKalma.getState();
+  const has = new Set(s.entries.map((e) => e.id));
+  const periods = demoData().entries.filter((e) => !has.has(e.id) && e.events.some((ev) => ev.type === 'menstrual'));
+  useKalma.setState({
+    profile: { ...s.profile, tracksCycle: true },
+    entries: [...s.entries, ...periods].sort((a, b) => a.recordedAt.localeCompare(b.recordedAt)),
+  });
+}
+
 /** Abre un espacio de datos: carga su caché local (y la semilla si es la demo y está vacía). */
 export async function openWorkspace(ws: Workspace) {
   await migrateLegacy();
@@ -259,6 +270,9 @@ export async function openWorkspace(ws: Workspace) {
     await useKalma.persist.rehydrate();
     // La semilla se carga solo la primera vez (si alguien vacía la demo, se respeta).
     if (ws === 'demo' && !existed) useKalma.getState().resetDemo();
+    // Demo guardada por una versión anterior (sin ciclo): se actualiza una sola vez sin perder lo que
+    // la persona haya hecho en ella. Solo la demo: los datos de una cuenta nunca se tocan.
+    else if (ws === 'demo' && useKalma.getState().profile.tracksCycle === undefined) upgradeDemo();
   }
   useKalma.setState({ hydrated: true, workspace: ws });
 }

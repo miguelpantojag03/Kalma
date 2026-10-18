@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion, ZoomIn } from 'react-native-reanimated';
 import { router } from 'expo-router';
@@ -6,6 +6,7 @@ import { FileText } from 'lucide-react-native';
 import { Banner, Button, EmptyState, KText, PatternCard, ProgressRing } from '@/components/ui';
 import { Screen } from '@/components/Screen';
 import { usePatterns } from '@/lib/usePatterns';
+import { medicationUse } from '@/lib/insights';
 import { useKalma } from '@/lib/store';
 import { space } from '@/theme';
 
@@ -17,6 +18,8 @@ export function PatternsScreen() {
   const reduce = useReducedMotion();
   const a = usePatterns();
   const seen = useKalma((s) => s.seenPatterns);
+  const entries = useKalma((s) => s.entries);
+  const meds = useMemo(() => medicationUse(entries), [entries]);
   const [showDismissed, setShowDismissed] = useState(false);
 
   const open = (id: string) => router.push({ pathname: '/patron/[id]', params: { id } });
@@ -44,6 +47,15 @@ export function PatternsScreen() {
           message="Un patrón dice qué suele pasar junto, no qué lo causa. Llévalo a tu consulta para conversarlo con tu médico."
         />
       </Animated.View>
+
+      {/* Uso frecuente de analgésicos: solo el dato y a quién preguntar; nunca "deja de tomarlo" (D76) */}
+      {meds.frequent && (
+        <Banner
+          tone="warning"
+          title={`Anotaste medicamentos para el dolor ${meds.days} de los últimos 30 días`}
+          message="Cuando se usan muy seguido, a veces el dolor de cabeza cambia. Coméntalo con tu médico y no cambies nada por tu cuenta."
+        />
+      )}
 
       {a.visible.length === 0 ? (
         <EmptyState kind="no-data" title="Todavía no veo patrones claros" description="Sigue registrando: con más días, las coincidencias reales se notan más. Vas muy bien." />
