@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Pressable, View, type TextInputInstance } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Banner, BottomSheet, Button, Checkbox, KText, PasswordField, PasswordRequirements, TextField } from '@/components/ui';
 import { Screen } from '@/components/Screen';
@@ -31,8 +31,8 @@ export function SignUpScreen() {
   const [legal, setLegal] = useState<'terms' | 'privacy' | null>(null);
   const sending = useRef(false);
 
-  const emailRef = useRef<TextInputInstance>(null);
-  const passwordRef = useRef<TextInputInstance>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
   const blur = (f: Field) => setTouched((t) => ({ ...t, [f]: true }));
 
   const valid = isValidName(name) && isValidEmail(email) && isValidPassword(password) && terms;

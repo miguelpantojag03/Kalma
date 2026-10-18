@@ -6,7 +6,7 @@ App móvil (Android e iOS) para la materia **Diseño de Interfaces**. Kalma conv
 
 **Kalma no diagnostica, no receta y no reemplaza al médico.** La IA está simulada con mocks realistas; las cuentas y los datos por usuario usan Supabase.
 
-Stack: Expo SDK 58 · React Native 0.88 · TypeScript strict · Expo Router · Reanimated 4 · Zustand · Supabase · Storybook RN.
+Stack: Expo SDK 57 · React Native 0.86 · TypeScript strict · Expo Router · Reanimated 4 · Zustand · Supabase · Storybook RN.
 
 ## Correr la app
 
@@ -20,7 +20,7 @@ npx expo start          # escanea el QR con Expo Go (Android) o con la cámara (
 
 **En Expo Go** funciona todo menos la voz real: el reconocimiento de voz es un módulo nativo que Expo Go no incluye. La app lo detecta y ofrece transcripciones de ejemplo y texto libre, sin errores.
 
-> Si la App Store o Google Play todavía no tienen el Expo Go de la SDK 58, usa la versión web (`w` en la terminal de Expo) o un development build.
+> Esta rama (`sdk-57`) usa la SDK 57 para abrirse con el Expo Go de las tiendas. La rama `main` sigue en la SDK 58 para cuando salga su Expo Go.
 
 ### Generar el APK (voz real, pruebas de usabilidad y sustentación)
 

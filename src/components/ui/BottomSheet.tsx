@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
-  KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View, type HostInstance,
+  KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View, Text,
 } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,7 +38,7 @@ export function BottomSheet({
   // Se monta en cuanto se abre (estado derivado en render); se desmonta al terminar la animación de salida.
   if (open && !mounted) setMounted(true);
   const p = useSharedValue(0);
-  const titleRef = useRef<HostInstance>(null);
+  const titleRef = useRef<Text>(null);
   const isSheet = variant === 'sheet';
 
   useEffect(() => {

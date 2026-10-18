@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, View, type GestureResponderEvent, type HostInstance, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type GestureResponderEvent, type ViewStyle } from 'react-native';
 import { Minus, Plus } from 'lucide-react-native';
 import { haptic } from '@/lib/haptics';
 import { clampIntensity, intensityA11y, intensityColor, intensityWord } from '@/lib/intensity';
@@ -64,7 +64,7 @@ export interface IntensitySliderProps {
  */
 export function IntensitySlider({ value, onChange, label = '¿Qué tan fuerte?', inferred, disabled }: IntensitySliderProps) {
   const { c, scheme } = useTheme();
-  const track = useRef<HostInstance>(null);
+  const track = useRef<View>(null);
   const geom = useRef({ x: 0, w: 1 });
   const [dragging, setDragging] = useState(false);
 

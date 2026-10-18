@@ -1,5 +1,5 @@
 import type { Ref } from 'react';
-import { Text, type HostInstance, type TextProps } from 'react-native';
+import { Text, type TextProps } from 'react-native';
 import { typeScale, useTheme, type ColorTokens, type TypeVariant } from '@/theme';
 
 export type TextTone = 'default' | 'muted' | 'brand' | 'warning' | 'danger' | 'onPrimary' | 'onIntensity';
@@ -8,7 +8,7 @@ export interface KTextProps extends TextProps {
   variant?: TypeVariant;
   tone?: TextTone;
   center?: boolean;
-  ref?: Ref<HostInstance>;
+  ref?: Ref<Text>;
 }
 
 const toneColor = (c: ColorTokens, tone: TextTone) =>
