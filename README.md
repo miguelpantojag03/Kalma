@@ -131,7 +131,7 @@ Reglas:
 
 - **Tokens:** [src/theme/tokens.ts](src/theme/tokens.ts) (claro y oscuro), [src/theme/typography.ts](src/theme/typography.ts).
 - **Componentes:** [src/components/ui/](src/components/ui/) (incluye TextField, PasswordField, PasswordRequirements y Checkbox).
-- **Catálogo en la app:** Perfil › *Ver el design system*. Funciona en Expo Go e incluye la tabla de contraste en vivo.
+- **Catálogo en la app:** en el modo demo, Perfil › Demo › *Ver el design system* (con una cuenta real no aparece: es una herramienta para presentar el proyecto). Funciona en Expo Go e incluye la tabla de contraste en vivo.
 - **Storybook RN:** `npm run storybook:app`; luego abre la ruta `/storybook` en la app. Solo entra al bundle en ese modo.
 
 ## Calidad
