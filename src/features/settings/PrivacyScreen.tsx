@@ -15,7 +15,7 @@ import { space, useTheme } from '@/theme';
 type ConsentKey = 'health' | 'ai' | 'location';
 const CONSENTS: { key: ConsentKey; label: string; description: string; required: boolean }[] = [
   { key: 'health', label: 'Guardar mis datos de salud', description: 'Sin esto no puedo guardar registros nuevos.', required: true },
-  { key: 'ai', label: 'Entender lo que digo con IA', description: 'Sin esto no puedo convertir tu voz o texto en registros.', required: true },
+  { key: 'ai', label: 'Entender lo que digo con IA', description: 'Sin esto no puedo convertir tu voz o texto en registros. Solo el texto que dictas (sin tu nombre) va a Google Gemini; en su versión gratuita, Google puede usarlo para mejorar sus productos.', required: true },
   { key: 'location', label: 'Usar mi ubicación aproximada', description: 'La app funciona igual sin esto.', required: false },
 ];
 
