@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
+import { Droplet } from 'lucide-react-native';
 import { intensityColor, intensityWord } from '@/lib/intensity';
 import { radius, typeScale, useTheme } from '@/theme';
 import { KText } from './KText';
@@ -13,6 +14,8 @@ export interface CalendarDayProps {
   selected?: boolean;
   outsideMonth?: boolean;
   disabled?: boolean;
+  /** Día con periodo (solo si la persona registra su ciclo): gota pequeña en la esquina. */
+  period?: boolean;
   onPress?: () => void;
 }
 
@@ -20,7 +23,7 @@ export interface CalendarDayProps {
  * Intensidad máxima = fondo de color + número. "Sin registro" = borde punteado (forma, no color,
  * y sin tono de reproche). Hoy = número dentro de un círculo.
  */
-export function CalendarDay({ day, fullDate, maxIntensity, isToday, selected, outsideMonth, disabled, onPress }: CalendarDayProps) {
+export function CalendarDay({ day, fullDate, maxIntensity, isToday, selected, outsideMonth, disabled, period, onPress }: CalendarDayProps) {
   const { c } = useTheme();
   const noRecord = maxIntensity === null;
   const has = typeof maxIntensity === 'number';
@@ -33,7 +36,7 @@ export function CalendarDay({ day, fullDate, maxIntensity, isToday, selected, ou
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${fullDate}${isToday ? ', hoy' : ''}: ${status}`}
+      accessibilityLabel={`${fullDate}${isToday ? ', hoy' : ''}: ${status}${period ? ', con periodo' : ''}`}
       accessibilityState={{ selected: !!selected, disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}
@@ -63,6 +66,11 @@ export function CalendarDay({ day, fullDate, maxIntensity, isToday, selected, ou
           {maxIntensity}
         </KText>
       )}
+      {period && (
+        <View style={styles.period} importantForAccessibility="no-hide-descendants">
+          <Droplet size={10} color={c.text} fill={c.text} />
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -71,4 +79,5 @@ const styles = StyleSheet.create({
   cell: { flex: 1, aspectRatio: 1, minHeight: 44, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', gap: 1 },
   num: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   level: { fontFamily: 'Nunito_800ExtraBold', fontSize: 12, lineHeight: 14 },
+  period: { position: 'absolute', top: 3, right: 3 },
 });

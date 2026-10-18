@@ -74,5 +74,8 @@ describe('espacios de datos (demo separada de las cuentas reales)', () => {
     await openWorkspace('demo');
     expect(await AsyncStorage.getItem('kalma-data')).toBeNull();
     expect(s().profile.name).toBe('Vieja demo');
+    // y se actualiza con lo nuevo de la semilla (ciclo activado y sus periodos), sin perder lo anterior
+    expect(s().profile.tracksCycle).toBe(true);
+    expect(s().entries.some((e) => e.events.some((ev) => ev.type === 'menstrual'))).toBe(true);
   });
 });

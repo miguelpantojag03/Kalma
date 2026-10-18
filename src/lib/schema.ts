@@ -184,5 +184,7 @@ export const ProfileSchema = z.object({
   reminderTime: z.string(), // "21:00"
   caregiver: z.object({ enabled: z.boolean(), personName: z.string().nullable() }),
   onboarded: z.boolean(),
+  /** Registrar el ciclo menstrual (opcional; lo elige la persona, no se deduce del nombre ni del género). */
+  tracksCycle: z.boolean().optional(),
 });
 export type Profile = z.infer<typeof ProfileSchema>;

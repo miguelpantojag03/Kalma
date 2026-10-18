@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, Switch, View } from 'react-native';
-import { Stack } from 'expo-router';
+import { router, Stack, type Href } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { Button, Card, Chip, ChipGroup, KText, TextField, useToast } from '@/components/ui';
 import { Screen } from '@/components/Screen';
@@ -70,6 +70,23 @@ export function HealthSettingsScreen() {
           <TextField label="Nombre" multiline={false} placeholder="Ej.: Dra. Rincón" value={docName} onChangeText={setDocName} />
           <TextField label="Especialidad" multiline={false} placeholder="Ej.: Neurología" value={docSpec} onChangeText={setDocSpec} />
           <Button variant="secondary" fullWidth label="Agregar médico" disabled={docName.trim().length < 2 || profile.doctors.some((d) => d.name === docName.trim())} onPress={() => { updateProfile({ doctors: [...profile.doctors, { name: docName.trim(), specialty: docSpec.trim() }] }); setDocName(''); setDocSpec(''); }} />
+        </Card>
+
+        <Card style={{ gap: space[3] }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 48 }}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <KText variant="subheading">Registrar mi ciclo menstrual</KText>
+              <KText variant="small" tone="muted">Opcional. Agrega «Mi ciclo», una pregunta en el check-in y la comparación de tus síntomas con tu periodo.</KText>
+            </View>
+            <Switch
+              accessibilityLabel="Registrar mi ciclo menstrual"
+              value={!!profile.tracksCycle}
+              onValueChange={(v) => { updateProfile({ tracksCycle: v }); showToast({ message: v ? 'Listo: encuentras «Mi ciclo» en Hoy y en Perfil' : 'Listo, ya no te pregunto por tu ciclo', tone: 'info' }); }}
+              trackColor={{ true: c.primaryStrong, false: c.borderStrong }}
+              thumbColor={c.surface}
+            />
+          </View>
+          {profile.tracksCycle && <Button variant="ghost" label="Ir a Mi ciclo" onPress={() => router.push('/ciclo' as Href)} />}
         </Card>
 
         <Card style={{ gap: space[3] }}>

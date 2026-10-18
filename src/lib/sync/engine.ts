@@ -76,30 +76,36 @@ export async function flush(): Promise<boolean> {
   try {
     const ops = compact(pending);
     const done = new Set<string>();
+    // Una tabla que falla (p. ej., falta correr una migración en Supabase) no detiene a las demás:
+    // lo suyo queda en la cola y se reintenta; lo de las otras tablas sí se envía.
+    const failed = new Set<SyncTable>();
     const ofTable = (t: SyncTable, kind: SyncOp['kind']) => ops.filter((o) => o.table === t && o.kind === kind);
 
     // Borrados primero, de hijos a padres (los eventos antes que sus registros)
     for (const t of [...TABLE_ORDER].reverse()) {
       for (const op of ofTable(t, 'delete')) {
         const { error } = await supabase.from(t).delete().match(op.key);
-        if (error) throw error;
+        if (error) { failed.add(t); break; }
         done.add(`${op.table}|${JSON.stringify(op.key)}`);
       }
     }
     // Altas y cambios, de padres a hijos, por lotes
     for (const t of TABLE_ORDER) {
       const ups = ofTable(t, 'upsert');
-      if (!ups.length) continue;
+      if (!ups.length || failed.has(t)) continue;
       const rows = ups.map((o) => ({ ...(o.row as Row), user_id: userId }));
+      let ok = true;
       for (let i = 0; i < rows.length; i += 200) {
         const { error } = await supabase.from(t).upsert(rows.slice(i, i + 200), { onConflict: ON_CONFLICT[t] });
-        if (error) throw error;
+        if (error) { ok = false; break; }
       }
+      if (!ok) { failed.add(t); continue; }
       for (const o of ups) done.add(`${o.table}|${JSON.stringify(o.key)}`);
     }
     // Se quitan de la cola todas las operaciones (incluidas las compactadas) de las filas enviadas
     const ids = pending.filter((o) => done.has(`${o.table}|${JSON.stringify(o.key)}`)).map((o) => o.id);
     useKalma.getState().dequeue(ids);
+    if (failed.size) scheduleFlush(15000);
     return useKalma.getState().outbox.length === 0;
   } catch {
     // Sin conexión o error temporal: se reintenta más tarde (la cola se conserva)
@@ -110,6 +116,8 @@ export async function flush(): Promise<boolean> {
   }
 }
 
+const OPTIONAL_PULL = new Set<string>(['doctors', 'doctor_visits']);
+
 const PULL_TABLES = ['profiles', 'consents', 'conditions', 'medications', 'entries', 'events', 'pattern_flags', 'experiments', 'doctors', 'doctor_visits'] as const;
 
 /** Descarga los datos de la cuenta y reemplaza la caché local (solo si no hay nada pendiente). */
@@ -117,8 +125,10 @@ export async function pull(): Promise<boolean> {
   if (!supabase || !userId) return false;
   if (useKalma.getState().outbox.length > 0) return false;
   const results = await Promise.all(PULL_TABLES.map((t) => supabase!.from(t).select('*')));
-  if (results.some((r) => r.error)) return false;
-  const tables = Object.fromEntries(PULL_TABLES.map((t, i) => [t, (results[i]!.data ?? []) as Row[]])) as Partial<Tables>;
+  // Las tablas de migraciones posteriores (médicos y visitas) pueden no existir todavía en el proyecto:
+  // si fallan, se descargan vacías en vez de dejar a la persona sin ninguno de sus datos.
+  if (results.some((r, i) => r.error && !OPTIONAL_PULL.has(PULL_TABLES[i]!))) return false;
+  const tables = Object.fromEntries(PULL_TABLES.map((t, i) => [t, (results[i]!.error ? [] : (results[i]!.data ?? [])) as Row[]])) as Partial<Tables>;
   applyingRemote = true;
   try {
     useKalma.setState(fromRows(tables));

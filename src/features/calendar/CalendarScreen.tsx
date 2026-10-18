@@ -11,6 +11,7 @@ import { monthMatrix, monthTitle, weekDays, WEEKDAY_LABELS } from '@/lib/calenda
 import { dayKey, fullDate, shortDate } from '@/lib/dates';
 import { intensityWord } from '@/lib/intensity';
 import { dayStatus, eventsByDay, symptomNames } from '@/lib/selectors';
+import { periodDays } from '@/lib/cycle';
 import { useKalma } from '@/lib/store';
 import { radius, space, touch, useTheme } from '@/theme';
 
@@ -26,6 +27,9 @@ export function CalendarScreen() {
   const reduce = useReducedMotion();
   const entries = useKalma((s) => s.entries);
   const byDay = useMemo(() => eventsByDay(entries), [entries]);
+  // Días con periodo (solo si la persona registra su ciclo)
+  const tracksCycle = useKalma((s) => !!s.profile.tracksCycle);
+  const periodSet = useMemo(() => new Set(tracksCycle ? periodDays(entries) : []), [entries, tracksCycle]);
   const symptoms = useMemo(() => symptomNames(entries), [entries]);
 
   const [mode, setMode] = useState<View_>('month');
@@ -104,6 +108,7 @@ export function CalendarScreen() {
                             isToday={isSameDay(cell.date, today)}
                             outsideMonth={!cell.inMonth}
                             disabled={future}
+                            period={periodSet.has(cell.key)}
                             onPress={() => router.push({ pathname: '/dia/[fecha]', params: { fecha: cell.key } })}
                           />
                         </View>

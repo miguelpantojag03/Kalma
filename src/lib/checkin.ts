@@ -76,8 +76,18 @@ const missedSymptomQ: CheckinQuestion = {
   ],
 };
 
+/** Solo si la persona activó "Registrar mi ciclo" (y no lo anotó ya hoy). */
+const periodQ: CheckinQuestion = {
+  id: 'period',
+  question: '¿Tienes el periodo hoy?',
+  options: [
+    { label: 'Sí', build: (at) => [ev('menstrual', at, 'tengo el periodo', { flow: null })] },
+    { label: 'No', build: () => [] },
+  ],
+};
+
 /** Arma las preguntas de hoy según lo registrado. Siempre entre 3 y 5. */
-export function buildCheckin(todayEvents: StoredEvent[]): CheckinQuestion[] {
+export function buildCheckin(todayEvents: StoredEvent[], opts: { tracksCycle?: boolean } = {}): CheckinQuestion[] {
   const qs: CheckinQuestion[] = [];
   const has = (t: StoredEvent['type']) => todayEvents.some((e) => e.type === t);
   const symptoms = todayEvents.filter((e): e is Extract<StoredEvent, { type: 'symptom' }> => e.type === 'symptom');
@@ -85,6 +95,7 @@ export function buildCheckin(todayEvents: StoredEvent[]): CheckinQuestion[] {
   if (!has('sleep')) qs.push(sleepQ);
   if (symptoms.length > 0) qs.push(symptomFollowUp(symptoms[symptoms.length - 1]!.data.name));
   else qs.push(missedSymptomQ);
+  if (opts.tracksCycle && !has('menstrual')) qs.push(periodQ);
   if (!has('stress')) qs.push(level('stress', '¿Cuánto estrés tuviste hoy?', [['Poco', 2], ['Algo', 5], ['Mucho', 8]]));
   if (!has('mood')) qs.push(level('mood', '¿Cómo estuvo tu ánimo?', [['Bajo', 3], ['Normal', 6], ['Bien', 8]]));
   if (!has('water')) qs.push(waterQ);
