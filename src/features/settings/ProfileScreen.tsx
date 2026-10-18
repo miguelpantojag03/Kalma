@@ -144,6 +144,8 @@ export function ProfileScreen() {
             />
           </View>
           <Button fullWidth label="Crear mi cuenta" icon={(c) => <Sparkles size={20} color={c} />} onPress={async () => { await exitDemo(); router.push('/crear-cuenta'); }} />
+          {/* Herramienta para presentar el proyecto: solo en la demo, nunca con una cuenta real */}
+          <Button variant="ghost" fullWidth label="Ver el design system" icon={(c) => <Palette size={20} color={c} />} onPress={() => router.push('/design-system')} />
           <Button variant="ghost" fullWidth label="Salir de la demo" onPress={exitDemo} />
         </Card>
       )}
@@ -174,7 +176,6 @@ export function ProfileScreen() {
         </ChipGroup>
       </Card>
 
-      <Button variant="ghost" fullWidth label="Ver el design system" icon={(c) => <Palette size={20} color={c} />} onPress={() => router.push('/design-system')} />
 
       {/* ---------- hojas ---------- */}
 

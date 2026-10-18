@@ -14,7 +14,7 @@ Estado: **fase 10 (auditoría final)**. Leyenda: ✅ verificado · 🧪 verifica
 
 ## Contraste
 
-La prueba importa `src/theme/tokens.ts` directamente: si alguien cambia un color y rompe AA, falla. El catálogo de la app (Perfil › Design system) muestra la misma tabla en vivo.
+La prueba importa `src/theme/tokens.ts` directamente: si alguien cambia un color y rompe AA, falla. El catálogo de la app (en la demo: Perfil › Demo › Design system) muestra la misma tabla en vivo.
 
 | Uso | Claro | Oscuro | Mín. |
 |---|---|---|---|
