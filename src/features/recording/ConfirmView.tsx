@@ -18,6 +18,8 @@ export interface ConfirmViewProps {
   onAddMore: (extra: string) => void;
   onSave: (events: ExtractedEvent[]) => void;
   onDiscard: () => void;
+  /** Quién lo entendió: se dice con transparencia (consentimiento «Entender lo que digo con IA»). */
+  engine?: 'gemini' | 'local';
 }
 
 /** Cada tarjeta lleva id estable e índice original: quitar o editar no corre las marcas a otra tarjeta. */
@@ -40,7 +42,7 @@ function whenLabel(e: ExtractedEvent) {
  * Todo lo que la IA extrajo es visible y editable ANTES de guardarse (principio 3 del brief).
  * Máximo una pregunta de seguimiento, que se puede saltar.
  */
-export function ConfirmView({ extraction, transcript, recordedAt, onAddMore, onSave, onDiscard }: ConfirmViewProps) {
+export function ConfirmView({ extraction, transcript, recordedAt, onAddMore, onSave, onDiscard, engine }: ConfirmViewProps) {
   const reduce = useReducedMotion();
   const showToast = useToast((s) => s.show);
   const [items, setItems] = useState<Item[]>(() => extraction.events.map((ev, i) => ({ id: i, orig: i, ev, edited: false })));
@@ -91,6 +93,7 @@ export function ConfirmView({ extraction, transcript, recordedAt, onAddMore, onS
       <ScrollView contentContainerStyle={{ paddingHorizontal: layout.gutter, paddingBottom: space[6], gap: space[3] }}>
         <KText variant="title">Esto entendí</KText>
         <KText tone="muted">Revisa que esté bien. Toca «Editar» si algo no es así.</KText>
+        {engine && <KText variant="caption" tone="muted">{engine === 'gemini' ? 'Entendido con IA (Google Gemini)' : 'Entendido en tu celular, sin IA'}</KText>}
 
         {lowCount > 0 && (
           <Banner tone="warning" title="Revisa lo que marqué" message={lowCount === 1 ? 'Marqué con un punto lo que no tengo tan claro.' : `Marqué con un punto ${lowCount} cosas que no tengo tan claras.`} />

@@ -10,7 +10,8 @@ import { closeModal } from '@/lib/nav';
 import { scheduleFollowUpReminder } from '@/lib/notifications';
 import { getMicPermission, requestMicPermission, speechAvailable, useSpeech } from '@/lib/speech';
 import { useKalma } from '@/lib/store';
-import { organizeVisit, VISIT_EXAMPLES, type OrganizedVisit } from '@/mocks/organizeVisit';
+import { organizeVisitAI } from '@/lib/ai';
+import { VISIT_EXAMPLES, type OrganizedVisit } from '@/mocks/organizeVisit';
 import { space, touch, useTheme } from '@/theme';
 
 type Phase = 'input' | 'listening' | 'processing' | 'review';
@@ -32,7 +33,8 @@ export function DoctorVisitScreen() {
     if (t.trim().length < 5) return;
     setText(t);
     setPhase('processing');
-    setVisit(await organizeVisit(t));
+    // IA real con respaldo local (D81)
+    setVisit((await organizeVisitAI(t)).visit);
     setPhase('review');
   };
 
