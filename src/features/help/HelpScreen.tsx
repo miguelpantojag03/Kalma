@@ -4,12 +4,13 @@ import { router, Stack } from 'expo-router';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { Button, Card, KText } from '@/components/ui';
 import { Screen } from '@/components/Screen';
+import { EARLY_DAYS } from '@/lib/patterns';
 import { DAYS_FOR_ANALYSIS } from '@/lib/selectors';
 import { space, touch, useTheme } from '@/theme';
 
 const FAQ: { q: string; a: string }[] = [
   { q: '¿Qué hace Kalma?', a: 'Te ayuda a anotar en segundos lo que comes, cómo duermes y lo que sientes, busca coincidencias entre esas cosas y arma un reporte de una página para tu médico.' },
-  { q: '¿Por qué todavía no veo patrones?', a: `Kalma necesita al menos ${DAYS_FOR_ANALYSIS} días con registros para comparar. Antes de eso, cualquier coincidencia podría ser casualidad. En Hoy ves cuántos días llevas.` },
+  { q: '¿Por qué todavía no veo patrones?', a: `Con ${EARLY_DAYS} días de registros te muestro pistas tempranas: coincidencias muy marcadas que todavía pueden ser casualidad. Con ${DAYS_FOR_ANALYSIS} días ya hay datos para confirmar patrones. Antes de eso, cualquier coincidencia podría engañarte. En Hoy ves cuántos días llevas.` },
   { q: '¿Qué significan Posible, Probable y Fuerte?', a: 'Qué tan seguido se repite algo en tus datos. Posible: puede ser casualidad. Probable: se repite más de lo esperado. Fuerte: se repite mucho, con 30 días o más de registros. Ninguno es un diagnóstico.' },
   { q: '¿Kalma me dice qué tengo o qué tomar?', a: 'No. Kalma no diagnostica, no receta y nunca te pedirá dejar un medicamento. Muestra tus datos ordenados para que los converses con tu médico.' },
   { q: '¿Quién puede ver mis datos?', a: 'Solo tú. Tu cuenta está protegida y cada persona solo puede leer sus propios registros. En el modo de ejemplo nada se guarda en una cuenta. Puedes exportar o borrar todo en Perfil › Privacidad y seguridad.' },
