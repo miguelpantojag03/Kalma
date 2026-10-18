@@ -14,7 +14,7 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - Fase 9 · Experimentos, Volví del médico y ajustes completos: D59–D66
 - Fase 10 · Pulido y accesibilidad: D67–D70
 - Fase 11 · Bienestar (mensaje del día, ciclo, comidas, consejos, modo crisis, ayuda): D71–D80
-- Fase 12 · IA real con Google Gemini: D81
+- Fase 12 · IA real con Google Gemini: D81–D82
 
 ---
 
@@ -556,3 +556,10 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - **Modelo:** `gemini-3.5-flash-lite`. Se probaron tres: `gemini-2.5-flash` ya no estaba disponible para la llave (404); `gemini-3.8-flash` entendía bien, pero tardaba 12–15 s y agotaba la cuota gratuita en 4 pedidos; Flash-Lite responde en 1–2 s (unos 3 s dentro de la app) con la misma calidad en estas tareas. Las instrucciones se ajustaron con frases reales: horas típicas de las comidas, alivio («me sirvió poquito» → parcial), «cólico menstrual» y prohibición de inventar valores no dichos.
 - **Alternativa descartada:** llamar a Gemini directo desde la app (la llave quedaría expuesta en el celular) y dejar que la IA decida las emergencias (un modelo puede fallar o no responder justo cuando más importa).
 - **Cómo se validará:** 7 pruebas automáticas (bandera roja siempre local, eventos inválidos descartados, respaldo local ante fallas o textos largos) y, en la prueba de usabilidad, comparar T2 y T3 con frases libres de los participantes: ¿cuántas correcciones hacen con IA y cuántas con el analizador local?
+
+### D82. La foto se reconoce de verdad, o se pide describirla (nunca se inventa)
+- **Necesidad del usuario:** registrar el plato o la caja del medicamento con una foto, y que lo propuesto sea lo que de verdad está en la foto.
+- **Principio:** honestidad del sistema (Nielsen #1) y prevención de errores (#5). Antes, la foto era una simulación que siempre proponía «bandeja paisa», sin importar la imagen. Ahora la foto va a la función `ai` y Gemini reconoce los alimentos o el nombre del medicamento, con confianza máxima de 0,8 (la tarjeta muestra el punto ámbar de «¿Es correcto?»). Si la foto no muestra comida ni medicamento, si no hay internet o si la IA falla, Kalma no inventa: dice lo que vio, si lo sabe, y abre el campo de texto para que la persona lo cuente.
+- **Error corregido:** en iPhone la galería y la cámara no abrían. La app las abría mientras la hoja «Registrar con una foto» (un modal) aún se cerraba, e iOS lo rechazaba sin avisar. Ahora espera a que la hoja termine de cerrarse y, si el sistema no deja abrirlas, muestra «Revisa el permiso de Fotos en Ajustes».
+- **Alternativa descartada:** mantener la simulación (es engañosa en una app de salud) o guardar la foto (no hace falta para encontrar patrones y es un dato más que proteger). Kalma no guarda la foto: solo la envía a Gemini para reconocerla, con las mismas condiciones del plan gratuito que el texto, y así lo dice el consentimiento.
+- **Cómo se validará:** prueba con una foto real de bandeja paisa (reconocida en 4,4 s como almuerzo) y con una captura de pantalla (sin registros, con descripción); 3 pruebas automáticas; tarea T3b de la prueba de usabilidad.
