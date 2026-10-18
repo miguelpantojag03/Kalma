@@ -79,9 +79,11 @@ const PHOTO_PROMPT = `${ENTRY_PROMPT}
 
 Ahora no recibes texto sino una FOTO que la persona tomó para registrar: un plato de comida, una bebida o la caja o empaque de un medicamento.
 - Registra solo lo que se ve con claridad; si dudas, baja "confidence" (nunca más de 0.8: es una foto).
-- Comida o bebida: un evento por cada alimento reconocible, con sus categorías. "occurred_at" = AHORA con precision "approximate" y "meal" según la hora.
+- Si es un plato típico reconocible (bandeja paisa, ajiaco, sancocho, calentado, changua…), regístralo como UN solo evento con el nombre del plato y TODAS las categorías de sus ingredientes; los ingredientes van en "summary". Las bebidas y acompañamientos aparte (gaseosa, jugo, tinto) sí son otro evento.
+- Si no es un plato típico, un evento por cada alimento reconocible, con sus categorías. "occurred_at" = AHORA con precision "approximate" y "meal" según la hora.
 - Medicamento: lee el nombre del empaque; dose solo si está impresa; taken_for y relief en null.
 - "source_text": "foto".
+- "summary": describe en UNA frase, en español y con tuteo, lo que ves en la foto con sus ingredientes visibles (p. ej. "Una bandeja paisa con arroz, frijoles, chicharrón, huevo frito, tajada de maduro y aguacate.").
 - Si la foto no muestra comida, bebida ni medicamento: "events": [] y en "unparsed" una descripción corta de lo que se ve.`;
 
 const VISIT_PROMPT = `Eres el componente que ordena lo que una persona en Colombia cuenta al salir de su cita médica. NO interpretas, NO corriges al médico, NO agregas información: solo organizas lo que la persona dijo.

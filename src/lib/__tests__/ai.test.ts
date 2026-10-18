@@ -91,7 +91,7 @@ describe('fotos reconocidas con Gemini', () => {
     ok({ summary: 'x', events: [plate], unparsed: null });
     const r = await understandPhoto('aGVsbG8=', 'image/jpeg', NOW);
     expect(mockInvoke).toHaveBeenCalledWith('ai', { body: { task: 'photo', image: 'aGVsbG8=', mimeType: 'image/jpeg', now: localIso(NOW) } });
-    expect(r.extraction!.events[0]).toMatchObject({ confidence: 0.8, source_text: 'foto' });
+    expect(r.extraction!.events[0]).toMatchObject({ confidence: 0.8, source_text: 'Reconocido en tu foto' });
   });
 
   it('si la foto no muestra comida, no inventa nada y dice qué vio', async () => {
