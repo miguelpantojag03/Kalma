@@ -1,0 +1,16 @@
+# Configuración mínima para la CLI de Supabase (supabase link / db push / functions deploy).
+# El project_id real se toma al hacer `supabase link --project-ref <tu-ref>`.
+project_id = "kalma"
+
+[auth]
+# URLs a las que pueden volver los enlaces de correo (confirmación y recuperación).
+# kalma:// = APK / development build · exp:// = Expo Go (cambia según tu red; ver README).
+site_url = "kalma://"
+additional_redirect_urls = ["kalma://**", "exp://**"]
+
+[auth.email]
+# Para las pruebas de usabilidad puede ponerse en false (ver README).
+enable_confirmations = true
+
+[functions.delete-account]
+verify_jwt = true

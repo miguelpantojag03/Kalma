@@ -1,0 +1,96 @@
+{
+  "expo": {
+    "name": "Kalma",
+    "slug": "kalma",
+    "version": "0.1.0",
+    "description": "Cuéntale a Kalma cómo te sientes. Ella encuentra el patrón.",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "kalma",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#F6FFF8",
+    "primaryColor": "#4F7566",
+    "locales": {
+      "es": "./locales/es.json"
+    },
+    "ios": {
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "co.edu.kalma",
+      "supportsTablet": false,
+      "infoPlist": {
+        "CFBundleDevelopmentRegion": "es",
+        "CFBundleAllowMixedLocalizations": true,
+        "NSMicrophoneUsageDescription": "Kalma usa el micrófono solo mientras le hablas, para entender cómo te sientes.",
+        "NSSpeechRecognitionUsageDescription": "Kalma convierte lo que dices en texto para anotar tus síntomas, comidas y hábitos.",
+        "NSCameraUsageDescription": "Kalma usa la cámara solo cuando tú la abres, para anotar tu plato o la caja de un medicamento.",
+        "NSPhotoLibraryUsageDescription": "Kalma usa la foto que elijas para anotar tu plato o la caja de un medicamento.",
+        "NSFaceIDUsageDescription": "Kalma usa Face ID para que solo tú puedas ver tus registros de salud."
+      }
+    },
+    "android": {
+      "package": "co.edu.kalma",
+      "adaptiveIcon": {
+        "backgroundColor": "#CCE3DE",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F6FFF8",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 160,
+          "dark": {
+            "backgroundColor": "#12191A",
+            "image": "./assets/images/splash-icon.png"
+          }
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Kalma usa el micrófono solo mientras le hablas, para entender cómo te sientes.",
+          "speechRecognitionPermission": "Kalma convierte lo que dices en texto para anotar tus síntomas, comidas y hábitos.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Kalma usa la foto que elijas para anotar tu plato o la caja de un medicamento.",
+          "cameraPermission": "Kalma usa la cámara solo cuando tú la abres, para anotar tu plato o la caja de un medicamento.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#4F7566",
+          "defaultChannel": "recordatorios"
+        }
+      ],
+      "expo-sharing",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "CFBundleDisplayName": "Kalma",
+  "NSMicrophoneUsageDescription": "Kalma usa el micrófono solo mientras le hablas, para entender cómo te sientes.",
+  "NSSpeechRecognitionUsageDescription": "Kalma convierte lo que dices en texto para anotar tus síntomas, comidas y hábitos.",
+  "NSCameraUsageDescription": "Kalma usa la cámara solo cuando tú la abres, para anotar tu plato o la caja de un medicamento.",
+  "NSPhotoLibraryUsageDescription": "Kalma usa la foto que elijas para anotar tu plato o la caja de un medicamento.",
+  "NSFaceIDUsageDescription": "Kalma usa Face ID para que solo tú puedas ver tus registros de salud."
+}
