@@ -4,7 +4,7 @@
 
 App móvil (Android e iOS) para la materia **Diseño de Interfaces**. Kalma convierte un audio de 10 segundos en datos de salud, busca patrones entre hábitos y síntomas (migraña y molestias digestivas) y arma un reporte de una página para el médico.
 
-**Kalma no diagnostica, no receta y no reemplaza al médico.** La IA está simulada con mocks realistas; las cuentas y los datos por usuario usan Supabase.
+**Kalma no diagnostica, no receta y no reemplaza al médico.** Entiende lo que dictas con Google Gemini (a través de una función de Supabase que guarda la llave) y, si no hay conexión o la IA falla, con su propio analizador en el celular. Las cuentas y los datos por usuario usan Supabase.
 
 Stack: Expo SDK 58 · React Native 0.88 · TypeScript strict · Expo Router · Reanimated 4 · Zustand · Supabase · Storybook RN.
 
@@ -83,6 +83,17 @@ npx supabase functions deploy delete-account
 ```
 Supabase le entrega automáticamente `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`. La función verifica quién llama con su propio token y solo borra a esa persona (sus datos se eliminan en cascada).
 
+### 5b. IA real con Google Gemini (opcional)
+1. Crea una llave gratuita en https://aistudio.google.com/apikey.
+2. Guárdala como secreto (en tu terminal, **nunca** en la app ni en el repositorio):
+   ```bash
+   npx supabase secrets set GEMINI_API_KEY=tu_llave --project-ref <tu-ref>
+   ```
+3. Despliega la función: `npx supabase functions deploy ai --project-ref <tu-ref> --use-api --no-verify-jwt`.
+4. Opcional: otro modelo con `GEMINI_MODEL` (por defecto `gemini-3.5-flash-lite`).
+
+Sin la llave, la app funciona igual con su analizador local.
+
 ### 6. Verificar que dos cuentas no se ven entre sí
 Con la confirmación de correo **desactivada**:
 ```bash
@@ -139,5 +150,6 @@ node scripts/check-reflow.mjs   # reflujo a 320 px (con la app corriendo; ver do
 | 9 | Experimentos, Volví del médico, Ajustes completos, cuidador, biometría | ✅ |
 | 10 | Pulido (errores, 404, háptica), auditoría de accesibilidad, heurísticas, guion de prueba, build con EAS | ✅ |
 | 11 | Mensaje del día, ciclo menstrual opcional, comidas y consejos, modo crisis, resumen semanal, aviso de analgésicos, ayuda | ✅ |
+| 12 | IA real con Google Gemini (Edge Function `ai`) y respaldo local | ✅ |
 
 **Mejora futura:** inicio de sesión con Google (y Apple en iOS).

@@ -170,6 +170,29 @@ export function applyFollowUpAnswer(extraction: Extraction, answer: string): Ext
   });
 }
 
+/**
+ * Máximo UNA pregunta de seguimiento (ley de Hick): intensidad faltante > alivio > horas de sueño dudosas.
+ * La usan el analizador local y la IA real (así la pregunta y sus respuestas rápidas son siempre las mismas).
+ */
+export function buildFollowUp(events: ExtractedEvent[], redFlag: boolean): Extraction['follow_up'] {
+  let follow_up: Extraction['follow_up'] = { question: null, quick_replies: [], target_event_index: null };
+  const noIntensity = events.findIndex((e) => e.type === 'symptom' && e.data.intensity_0_10 === null);
+  const noRelief = events.findIndex((e) => e.type === 'medication' && e.data.relief === null && e.data.taken_for);
+  const guessSleep = events.findIndex((e) => e.type === 'sleep' && e.confidence < 0.6);
+  if (!redFlag) {
+    if (noIntensity >= 0) {
+      const e = events[noIntensity]!;
+      follow_up = { question: `¿Qué tan fuerte es ${e.type === 'symptom' ? (e.data.name === 'molestia digestiva' ? 'la molestia' : `el ${e.data.name}`) : 'el síntoma'}?`, quick_replies: [...INTENSITY_REPLIES], target_event_index: noIntensity };
+    } else if (noRelief >= 0) {
+      const e = events[noRelief]!;
+      follow_up = { question: `¿Te alivió el ${e.type === 'medication' ? (e.data.generic_name ?? e.data.name) : 'medicamento'}?`, quick_replies: [...RELIEF_REPLIES], target_event_index: noRelief };
+    } else if (guessSleep >= 0) {
+      follow_up = { question: '¿Cuántas horas dormiste, más o menos?', quick_replies: [...SLEEP_REPLIES], target_event_index: guessSleep };
+    }
+  }
+  return follow_up;
+}
+
 /* ---------- extracción ---------- */
 
 const CLAUSE_SPLIT = /[,.;!?]|\by luego\b|\bluego\b|\bdespues de eso\b|\bentonces\b|\by (?=(me|mi|desayun|almor|com[ií]|cen[eé]|dorm|tom|hic|camin|fui|estoy|tengo|de onces|al))/g;
@@ -302,22 +325,7 @@ export function extractEntrySync(transcript: string, opts: ExtractOptions = {}):
     else lastWhen = when;
   }
 
-  // Máximo UNA pregunta de seguimiento (ley de Hick): intensidad faltante > alivio > horas de sueño dudosas
-  let follow_up: Extraction['follow_up'] = { question: null, quick_replies: [], target_event_index: null };
-  const noIntensity = events.findIndex((e) => e.type === 'symptom' && e.data.intensity_0_10 === null);
-  const noRelief = events.findIndex((e) => e.type === 'medication' && e.data.relief === null && e.data.taken_for);
-  const guessSleep = events.findIndex((e) => e.type === 'sleep' && e.confidence < 0.6);
-  if (!red.detected) {
-    if (noIntensity >= 0) {
-      const e = events[noIntensity]!;
-      follow_up = { question: `¿Qué tan fuerte es ${e.type === 'symptom' ? (e.data.name === 'molestia digestiva' ? 'la molestia' : `el ${e.data.name}`) : 'el síntoma'}?`, quick_replies: [...INTENSITY_REPLIES], target_event_index: noIntensity };
-    } else if (noRelief >= 0) {
-      const e = events[noRelief]!;
-      follow_up = { question: `¿Te alivió el ${e.type === 'medication' ? (e.data.generic_name ?? e.data.name) : 'medicamento'}?`, quick_replies: [...RELIEF_REPLIES], target_event_index: noRelief };
-    } else if (guessSleep >= 0) {
-      follow_up = { question: '¿Cuántas horas dormiste, más o menos?', quick_replies: [...SLEEP_REPLIES], target_event_index: guessSleep };
-    }
-  }
+  const follow_up = buildFollowUp(events, red.detected);
 
   const result: Extraction = {
     summary: summarize(events),
@@ -329,7 +337,7 @@ export function extractEntrySync(transcript: string, opts: ExtractOptions = {}):
   return ExtractionSchema.parse(result); // el mock cumple el contrato igual que lo haría el LLM
 }
 
-function summarize(events: ExtractedEvent[]): string {
+export function summarize(events: ExtractedEvent[]): string {
   if (events.length === 0) return 'No encontré síntomas, comidas ni hábitos en lo que dijiste.';
   const parts = events.map((e) => {
     switch (e.type) {

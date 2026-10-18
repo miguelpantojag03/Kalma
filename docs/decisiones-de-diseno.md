@@ -14,6 +14,7 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - Fase 9 · Experimentos, Volví del médico y ajustes completos: D59–D66
 - Fase 10 · Pulido y accesibilidad: D67–D70
 - Fase 11 · Bienestar (mensaje del día, ciclo, comidas, consejos, modo crisis, ayuda): D71–D80
+- Fase 12 · IA real con Google Gemini: D81
 
 ---
 
@@ -540,3 +541,18 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - **Principio:** prevención de errores. Las preguntas se arman según lo registrado hoy. Al abrir el check-in desde la notificación con la app cerrada, se armaban antes de cargar los datos: preguntaba el sueño ya anotado y olvidaba la pregunta del periodo. Ahora espera a tener los datos (unos milisegundos, mientras se ve la splash).
 - **Alternativa descartada:** recalcular las preguntas cuando llegan los datos (cambiarían mientras la persona responde).
 - **Cómo se validará:** prueba del flujo completo abriendo el check-in directamente (verificado: con sueño ya anotado, no lo pregunta e incluye «¿Tienes el periodo hoy?»).
+
+## Fase 12 · IA real (Google Gemini)
+
+### D81. IA real con salvaguardas: Gemini interpreta, las reglas locales protegen
+- **Necesidad del usuario:** que Kalma entienda como habla de verdad («amanecí con jaqueca y me tomé un dolex, me sirvió poquito»), no solo las frases que el analizador por reglas conoce.
+- **Principio:** confianza y seguridad por capas. Gemini interpreta los eventos (qué comió, qué sintió, cuándo, cuánto le dolió). Lo crítico no depende del modelo:
+  - Las **banderas rojas** se detectan antes y en el celular, sin internet; la pantalla de emergencia nunca espera a la IA.
+  - El **resumen** y la **pregunta de seguimiento** salen de las mismas reglas de siempre, para que sus respuestas rápidas funcionen igual.
+  - **Cada evento se valida** con el esquema de la app; lo inválido se descarta.
+  - Si la IA falla, tarda más de 9 s, agota la cuota o no entiende nada, **entiende el celular** con el analizador local.
+  - La persona **siempre revisa y edita** antes de guardar, y ve quién lo entendió: «Entendido con IA (Google Gemini)» o «Entendido en tu celular, sin IA».
+- **Privacidad:** la llave de Gemini vive como secreto en Supabase (Edge Function `ai`); nunca está en la app ni en el repositorio. Se envía solo el texto dictado y la hora local, sin nombre. La función no guarda ni registra el texto. El consentimiento «Entender lo que digo con IA» dice que se usa Google Gemini y que, en su versión gratuita, Google puede usar el texto para mejorar sus productos. La función tiene límites (1.500 caracteres, 20 pedidos por minuto por IP).
+- **Modelo:** `gemini-3.5-flash-lite`. Se probaron tres: `gemini-2.5-flash` ya no estaba disponible para la llave (404); `gemini-3.8-flash` entendía bien, pero tardaba 12–15 s y agotaba la cuota gratuita en 4 pedidos; Flash-Lite responde en 1–2 s (unos 3 s dentro de la app) con la misma calidad en estas tareas. Las instrucciones se ajustaron con frases reales: horas típicas de las comidas, alivio («me sirvió poquito» → parcial), «cólico menstrual» y prohibición de inventar valores no dichos.
+- **Alternativa descartada:** llamar a Gemini directo desde la app (la llave quedaría expuesta en el celular) y dejar que la IA decida las emergencias (un modelo puede fallar o no responder justo cuando más importa).
+- **Cómo se validará:** 7 pruebas automáticas (bandera roja siempre local, eventos inválidos descartados, respaldo local ante fallas o textos largos) y, en la prueba de usabilidad, comparar T2 y T3 con frases libres de los participantes: ¿cuántas correcciones hacen con IA y cuántas con el analizador local?
