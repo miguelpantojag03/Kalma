@@ -13,6 +13,7 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - Cuentas reales (Supabase): D50–D58
 - Fase 9 · Experimentos, Volví del médico y ajustes completos: D59–D66
 - Fase 10 · Pulido y accesibilidad: D67–D70
+- Fase 11 · Bienestar (mensaje del día, ciclo, comidas, consejos, modo crisis, ayuda): D71–D80
 
 ---
 
@@ -477,3 +478,65 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - **Principio:** trazabilidad. `decisiones-de-diseno.md` (por qué), `heuristicas.md` (autoevaluación de Nielsen con severidad), `accesibilidad.md` (WCAG), `prueba-usabilidad.md` (guion, tareas T0–T11 y SUS) y `build.md` (cómo generar el APK). Las tareas citadas en cada decisión son las mismas del guion.
 - **Alternativa descartada:** un documento final aparte que se desactualiza con cada cambio.
 - **Cómo se validará:** revisión cruzada antes de la sustentación.
+
+## Fase 11 · Bienestar: mensaje del día, ciclo, comidas y más
+
+### D71. Mensaje del día que acompaña, sin culpa ni rachas
+- **Necesidad del usuario:** sentirse acompañado al abrir la app, sin que se convierta en otra obligación.
+- **Principio:** diseño emocional y tono sin culpa (D06). La frase cambia una vez al día. Si ayer hubo un síntoma de 7 o más, el mensaje es de cuidado («Ayer fue un día pesado. Hoy, si puedes, ve con calma»), no de ánimo genérico. Una prueba automática revisa que ningún mensaje hable de rachas, culpa o promesas de salud, y que todos puedan aparecer (así se encontró un error que dejaba 4 frases sin salir nunca). Va después de los botones de registrar, para no quitarle el primer lugar a la acción principal.
+- **Alternativa descartada:** notificaciones motivacionales diarias por defecto (fatiga de avisos) y frases del tipo «¡No rompas tu racha!».
+- **Cómo se validará:** entrevista posterior: «¿El mensaje te ayudó, te dio igual o te molestó?». La notificación de las 8 a. m. existe, pero viene apagada.
+
+### D72. El ciclo menstrual es opcional y no se deduce del nombre ni del género
+- **Necesidad del usuario:** quien tiene periodo y migraña quiere saber si sus síntomas cambian con el ciclo; quien no, no quiere ver nada de eso.
+- **Principio:** inclusión y privacidad. Kalma no supone el género de nadie (D58): la persona lo activa en el onboarding o en Mi salud con «Registrar mi ciclo menstrual». Con eso aparecen Mi ciclo, una gota en los días con periodo del calendario y la pregunta «¿Tienes el periodo hoy?» en el check-in. La fecha del próximo periodo se muestra como estimación, con la advertencia de que no sirve como método anticonceptivo. La relación con los síntomas se cuenta en la ventana perimenstrual (2 días antes a 3 después del inicio) y se presenta como coincidencia, con la sugerencia de comentarlo con el médico.
+- **Alternativa descartada:** preguntar «¿Eres mujer?» y activarlo según la respuesta. Excluye a hombres trans y personas no binarias que menstrúan, y obliga a todas las demás a dar un dato que no necesitan dar.
+- **Cómo se validará:** T12 (activar el ciclo y anotar el periodo de hoy en ≤ 2 toques desde Mi ciclo).
+
+### D73. Modo crisis: una pantalla para el peor momento de la migraña
+- **Necesidad del usuario:** Laura, en plena migraña, no tolera la luz ni el ruido y no quiere hablar ni leer.
+- **Principio:** diseño para el contexto extremo. Pantalla casi negra en cualquier tema, con contraste ≥ 7:1 (AAA); texto grande; sin animaciones ni vibración. Hay solo dos decisiones: qué tan fuerte es (un toque empieza el registro con la hora exacta) y «Ya pasó» (calcula cuánto duró). Si se cierra la app, al volver se retoma el episodio abierto. Siempre queda visible la salida a emergencias («¿Es el peor dolor de tu vida o algo distinto a lo de siempre?»).
+- **Alternativa descartada:** el registro normal con un tema oscuro (sigue teniendo micrófono, onda animada, tarjetas y varias decisiones).
+- **Cómo se validará:** T4d (registrar un episodio con la pantalla en brillo mínimo): la persona termina sin ayuda y no se queja de la luz.
+
+### D74. Diario de comidas sin calorías ni juicios
+- **Necesidad del usuario:** ver qué comió y cuándo, sin sentirse evaluado.
+- **Principio:** reconocer antes que recordar (Nielsen #6) y no duplicar trabajo. El diario se arma con lo que ya se registró por voz, texto o foto, agrupado en desayuno, almuerzo, onces y comida. «Tu semana» dice en cuántos días apareció cada categoría («Lácteos · 5 días») y aclara: «No es bueno ni malo: es lo que Kalma compara con tus síntomas». No hay calorías, semáforos de colores ni puntajes.
+- **Alternativa descartada:** un contador de calorías o una calificación de cada comida. No sirve para encontrar detonantes y puede hacer daño a personas con una relación difícil con la comida.
+- **Cómo se validará:** T13 (decir qué almorzó ayer y en cuántos días de la semana comió lácteos, en ≤ 30 s).
+
+### D75. Consejos de alimentación: generales o de tus propios datos, nunca una dieta
+- **Necesidad del usuario:** ideas concretas para sentirse mejor, sin consejos peligrosos.
+- **Principio:** seguridad (como D59). Hay 10 ideas generales de bienestar (horarios, agua, cafeína constante, comer con calma, cenar antes de dormir…). Los consejos personales salen de los patrones de comida de la persona y de su semana (días sin desayuno, poca agua, cafeína después de las 2 p. m.), y siempre se dicen como coincidencia. Cuando hay un patrón, la salida es «Probar un experimento», no «deja de comer X». Una prueba automática revisa que ningún consejo hable de calorías, suplementos, ayunos ni de dejar de comer algo. La sección cierra con: «Ideas, no un plan de alimentación. Para cambios grandes, habla con tu médico o un nutricionista».
+- **Alternativa descartada:** recomendaciones del tipo «elimina el gluten» o listas de «alimentos prohibidos para la migraña» (no tienen validación individual y pueden llevar a dietas restrictivas sin control).
+- **Cómo se validará:** revisión de contenido con un profesional de nutrición, si es posible, y la pregunta «¿Qué harías con este consejo?» en la entrevista.
+
+### D76. Uso frecuente de analgésicos: el dato, a quién preguntar y nada más
+- **Necesidad del usuario:** saber si está tomando analgésicos muy seguido, porque eso puede empeorar el dolor de cabeza, sin que una app le diga qué hacer con su tratamiento.
+- **Principio:** seguridad y neutralidad. Se usan los umbrales de la clasificación internacional de cefaleas (ICHD-3): triptanes 10 o más días al mes, o cualquier analgésico 15 o más días. Si se cruzan, Patrones muestra: «Anotaste medicamentos para el dolor N de los últimos 30 días. Coméntalo con tu médico y no cambies nada por tu cuenta». El reporte siempre incluye «Días con medicamento en el periodo: N de M».
+- **Alternativa descartada:** «Estás tomando demasiados analgésicos: reduce la dosis» (sería una indicación médica).
+- **Cómo se validará:** prueba automática con 9, 10, 14 y 15 días; revisión del texto con el docente.
+
+### D77. La semana en una frase neutra y los cambios por subir a la vista
+- **Necesidad del usuario:** saber cómo le fue sin sentirse juzgado, y saber si lo que anotó ya está a salvo en su cuenta.
+- **Principio:** visibilidad del estado del sistema (Nielsen #1). El anillo de Hoy dice «Esta semana: 6 días con síntomas (la anterior, 2 días)», sin «mejoraste» ni «empeoraste». Con cuenta y sin internet, Hoy muestra «3 cambios por subir a tu cuenta · se envían solos con internet». Esto cierra el problema abierto de la heurística 1.
+- **Alternativa descartada:** flechas verdes y rojas de tendencia (el color juzga, y una semana con más síntomas no es culpa de nadie).
+- **Cómo se validará:** T6b (sin conexión): la persona explica que lo anotado se subirá después.
+
+### D78. Ayuda y preguntas frecuentes dentro de la app
+- **Necesidad del usuario:** resolver dudas como «¿por qué no veo patrones?» sin salir de la app.
+- **Principio:** Nielsen #10. Once preguntas en acordeón (una abierta a la vez), con respuestas de dos o tres frases, en Perfil › Ayuda. Cierra el problema abierto de la heurística 10.
+- **Alternativa descartada:** un manual en PDF o un sitio web externo.
+- **Cómo se validará:** pregunta de la entrevista: «Si tuvieras una duda, ¿dónde la buscarías?».
+
+### D79. Una tabla de Supabase con error no detiene la sincronización de las demás
+- **Necesidad del usuario:** que sus registros se suban aunque falte una actualización en el servidor.
+- **Principio:** robustez y prevención de pérdida de datos. Antes, si una tabla fallaba (por ejemplo, una migración sin correr), no se subía nada. Ahora cada tabla se envía por separado: lo que falla queda en cola y se reintenta, lo demás se sube. Al descargar en otro celular, las tablas más nuevas que aún no existan llegan vacías en vez de bloquear todo.
+- **Alternativa descartada:** detener todo hasta corregir el servidor (la persona no puede hacer nada y no entiende por qué).
+- **Cómo se validará:** pruebas de sincronización y prueba manual con una migración sin correr.
+
+### D80. El check-in espera a que carguen los datos
+- **Necesidad del usuario:** que el check-in no pregunte lo que ya contó.
+- **Principio:** prevención de errores. Las preguntas se arman según lo registrado hoy. Al abrir el check-in desde la notificación con la app cerrada, se armaban antes de cargar los datos: preguntaba el sueño ya anotado y olvidaba la pregunta del periodo. Ahora espera a tener los datos (unos milisegundos, mientras se ve la splash).
+- **Alternativa descartada:** recalcular las preguntas cuando llegan los datos (cambiarían mientras la persona responde).
+- **Cómo se validará:** prueba del flujo completo abriendo el check-in directamente (verificado: con sueño ya anotado, no lo pregunta e incluye «¿Tienes el periodo hoy?»).

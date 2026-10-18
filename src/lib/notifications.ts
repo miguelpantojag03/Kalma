@@ -130,6 +130,35 @@ export async function scheduleFollowUpReminder(label: string, dayKeyStr: string)
   return true;
 }
 
+const MORNING_PREFIX = 'motd-';
+
+/**
+ * Mensaje del día a las 8 a. m. Como cada día lleva un texto distinto, se programan los próximos
+ * 7 días con fecha fija (y se reprograman al abrir la app). Apagado por defecto.
+ */
+export async function scheduleMorningMessages(messageFor: (d: Date) => string, days = 7): Promise<boolean> {
+  if (!supported || (await getNotifPermission()) !== 'granted') return false;
+  await ensureChannel();
+  await cancelMorningMessages();
+  const now = new Date();
+  for (let i = 0; i <= days; i++) {
+    const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 8, 0, 0);
+    if (at.getTime() <= now.getTime()) continue;
+    await Notifications.scheduleNotificationAsync({
+      identifier: `${MORNING_PREFIX}${at.toISOString().slice(0, 10)}`,
+      content: { title: 'Kalma', body: messageFor(at), data: { url: '/' } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: CHANNEL },
+    });
+  }
+  return true;
+}
+
+export async function cancelMorningMessages() {
+  if (!supported) return;
+  const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
+  await Promise.all(all.filter((n) => n.identifier.startsWith(MORNING_PREFIX)).map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {})));
+}
+
 /**
  * Al cerrar sesión, eliminar la cuenta, salir de la demo o borrar los datos: ningún recordatorio con
  * datos de esa persona (su nombre, sus experimentos, sus controles) sigue llegando al celular.

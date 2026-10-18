@@ -11,7 +11,8 @@ import { ToastHost } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/lib/auth/AuthProvider';
 import { useDeviceSettings } from '@/lib/deviceSettings';
 import { expiredIds } from '@/lib/experiments';
-import { cancelDailyCheckin, cancelExperimentReminder, scheduleDailyCheckin, scheduleExperimentReminder, useNotificationRouting } from '@/lib/notifications';
+import { generalMessageFor } from '@/lib/motivation';
+import { cancelDailyCheckin, cancelExperimentReminder, cancelMorningMessages, scheduleDailyCheckin, scheduleExperimentReminder, scheduleMorningMessages, useNotificationRouting } from '@/lib/notifications';
 import { useKalma } from '@/lib/store';
 import { ThemeProvider, useTheme } from '@/theme';
 
@@ -48,6 +49,7 @@ function Navigator() {
   const experiments = useKalma((s) => s.experiments);
   const endExperiment = useKalma((s) => s.endExperiment);
   const checkinReminder = useDeviceSettings((s) => s.checkinReminder);
+  const morningMessage = useDeviceSettings((s) => s.morningMessage);
 
   // La splash se mantiene hasta saber a qué espacio entrar y tener su caché cargada:
   // nunca se ve un parpadeo de la bienvenida ni un "día en blanco" falso (D28, D56).
@@ -64,6 +66,13 @@ function Navigator() {
     if (checkinReminder) void scheduleDailyCheckin(reminderTime, name || undefined);
     else void cancelDailyCheckin();
   }, [reminderTime, name, onboarded, status, checkinReminder]);
+
+  // Mensaje del día a las 8 a. m. (opcional): se reprograman los próximos 7 días al abrir la app.
+  useEffect(() => {
+    if (!onboarded || (status !== 'signedIn' && status !== 'demo')) return;
+    if (morningMessage) void scheduleMorningMessages(generalMessageFor);
+    else void cancelMorningMessages();
+  }, [onboarded, status, morningMessage]);
 
   // El recordatorio del experimento activo se reprograma al entrar (otro celular, otra sesión o
   // nueva hora del check-in). Usa un identificador fijo, así que no se duplica.
@@ -111,6 +120,8 @@ function Navigator() {
         <Stack.Screen name="registro" options={{ presentation: 'modal' }} />
         <Stack.Screen name="checkin" options={{ presentation: 'modal' }} />
         <Stack.Screen name="volvi-del-medico" options={{ presentation: 'modal' }} />
+        {/* Modo crisis: pantalla completa y oscura (para una migraña en curso) */}
+        <Stack.Screen name="crisis" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
         {/* Emergencia: pantalla completa, no se descarta con un gesto por accidente */}
         <Stack.Screen name="emergencia" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
         <Stack.Screen name="design-system" options={{ headerShown: true, title: 'Design system' }} />

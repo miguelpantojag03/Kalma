@@ -20,17 +20,27 @@ import { SavedView } from '@/features/recording/SavedView';
  * sola (sin botón "Siguiente": un toque por pregunta). Cada pregunta se puede saltar.
  */
 export function CheckinScreen() {
+  // Las preguntas dependen de lo registrado hoy: se esperan los datos guardados antes de armarlas.
+  // Sin esto, al abrir el check-in desde la notificación con la app cerrada, preguntaba con el día
+  // vacío (pedía el sueño ya anotado y olvidaba la pregunta del periodo).
+  const hydrated = useKalma((s) => s.hydrated);
+  if (!hydrated) return null;
+  return <CheckinFlow />;
+}
+
+function CheckinFlow() {
   const reduce = useReducedMotion();
   const { c } = useTheme();
   const entries = useKalma((s) => s.entries);
   const addEntry = useKalma((s) => s.addEntry);
   const name = useKalma((s) => s.profile.name);
+  const tracksCycle = useKalma((s) => !!s.profile.tracksCycle);
   const canRecord = useCanRecord();
 
   const today = dayKey(new Date());
   const already = entries.some((e) => e.source === 'checkin' && dayKey(e.recordedAt) === today);
   // Las preguntas se fijan al abrir (no cambian mientras se responde)
-  const [questions] = useState(() => buildCheckin(eventsByDay(entries).get(today) ?? []));
+  const [questions] = useState(() => buildCheckin(eventsByDay(entries).get(today) ?? [], { tracksCycle }));
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [done, setDone] = useState<number | null>(null);

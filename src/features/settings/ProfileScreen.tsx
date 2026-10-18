@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Switch, View } from 'react-native';
 import { router, type Href } from 'expo-router';
-import { Bell, BellRing, ClipboardList, Download, FileText, FlaskConical, HeartPulse, KeyRound, LogOut, Moon, Palette, RotateCcw, ShieldCheck, Smartphone, Sparkles, Stethoscope, Sun, Trash, UserRound } from 'lucide-react-native';
+import { Bell, BellRing, CircleHelp, ClipboardList, Droplet, Download, FileText, FlaskConical, HeartPulse, KeyRound, LogOut, Moon, Palette, RotateCcw, ShieldCheck, Smartphone, Sparkles, Stethoscope, Sun, Trash, UserRound, Utensils } from 'lucide-react-native';
 import {
   Banner, BottomSheet, Button, Card, Chip, ChipGroup, KText, ListRow, PasswordField, PasswordRequirements, PermissionPrompt, TextField, useToast,
 } from '@/components/ui';
@@ -158,7 +158,12 @@ export function ProfileScreen() {
         <ListRow icon={FlaskConical} label="Mis experimentos" description={experiments.some((x) => x.status === 'active') ? 'Tienes uno en curso.' : 'Prueba un cambio y compara.'} onPress={() => router.push('/experimentos' as Href)} />
         <ListRow icon={Stethoscope} label="Volví del médico" description="Dicta lo que te dijeron y lo organizo." onPress={() => router.push('/volvi-del-medico')} />
         <ListRow icon={ClipboardList} label="Mis visitas al médico" onPress={() => router.push('/visitas')} />
+        <ListRow icon={Utensils} label="Comidas y consejos" description="Lo que comiste y ideas para tu bienestar." onPress={() => router.push('/comidas' as Href)} />
+        {profile.tracksCycle && <ListRow icon={Droplet} label="Mi ciclo" description="Tu periodo y tus síntomas." onPress={() => router.push('/ciclo' as Href)} />}
         <ListRow icon={FileText} label="Reporte para el médico" description="Un resumen de una página." onPress={() => router.push('/reporte')} />
+      </Card>
+      <Card>
+        <ListRow icon={CircleHelp} label="Ayuda y preguntas frecuentes" onPress={() => router.push('/ayuda' as Href)} />
       </Card>
 
       <Card>

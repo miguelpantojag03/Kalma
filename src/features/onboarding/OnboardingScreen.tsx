@@ -40,6 +40,7 @@ export function OnboardingScreen() {
 
   const [consent, setLocalConsent] = useState({ health: false, ai: false, location: false });
   const [forWhom, setForWhom] = useState<'me' | 'other'>('me');
+  const [tracksCycle, setTracksCycle] = useState(false);
   const [personName, setPersonName] = useState('');
   const [conditions, setConditions] = useState<string[]>([]);
   const [meds, setMeds] = useState<string[]>([]);
@@ -71,6 +72,7 @@ export function OnboardingScreen() {
       reminderTime: time,
       caregiver: { enabled: forWhom === 'other', personName: forWhom === 'other' ? personName.trim() || null : null },
       onboarded: true,
+      tracksCycle,
     });
     if (notif === 'granted') await scheduleDailyCheckin(time, profile.name || undefined);
     router.replace('/');
@@ -110,6 +112,14 @@ export function OnboardingScreen() {
               {forWhom === 'other' && (
                 <TextField label="¿Cómo se llama esa persona?" multiline={false} placeholder="Ej.: mi mamá, Rosa" value={personName} onChangeText={setPersonName} hint="Te preguntaré «¿Cómo está Rosa?» y el reporte saldrá a su nombre." />
               )}
+              {/* Opcional y sin suponer el género: lo decide cada persona (D72) */}
+              <Checkbox
+                checked={tracksCycle}
+                onChange={setTracksCycle}
+                requirement="optional"
+                label="También quiero registrar el ciclo menstrual"
+                description="Para ver si los síntomas cambian con el periodo. Lo puedes cambiar después en Perfil › Mi salud."
+              />
             </>
           )}
           {step === 2 && (

@@ -78,6 +78,7 @@ export function toRows(d: Pick<KalmaData, 'profile' | 'consent' | 'entries' | 'e
     profiles: [{
       user_id: userId, name: p.name, goals: p.goals, reminder_time: p.reminderTime,
       caregiver_enabled: p.caregiver.enabled, caregiver_name: p.caregiver.personName, onboarded: p.onboarded,
+      tracks_cycle: !!p.tracksCycle,
     }],
     consents: [{ user_id: userId, health: d.consent.health, ai: d.consent.ai, location: d.consent.location, changed_at: d.consent.updatedAt }],
     conditions: p.conditions.map((name) => ({ user_id: userId, name })),
@@ -118,6 +119,7 @@ export function fromRows(t: Partial<Tables>): Omit<KalmaData, 'outbox'> {
     reminderTime: String(prof.reminder_time ?? '21:00'),
     caregiver: { enabled: !!prof.caregiver_enabled, personName: (prof.caregiver_name as string) ?? null },
     onboarded: !!prof.onboarded,
+    tracksCycle: !!prof.tracks_cycle,
   };
   const eventsByEntry = new Map<string, StoredEvent[]>();
   for (const r of t.events ?? []) {
