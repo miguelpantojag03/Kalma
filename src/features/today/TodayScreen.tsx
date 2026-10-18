@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
-import { RefreshControl, View } from 'react-native';
-import { router } from 'expo-router';
-import { Plus } from 'lucide-react-native';
+import { Pressable, RefreshControl, View } from 'react-native';
+import { router, type Href } from 'expo-router';
+import { ChevronRight, FlaskConical, Plus } from 'lucide-react-native';
+import { AdherenceToday } from '@/features/experiments/AdherenceToday';
+import { experimentDay } from '@/lib/experiments';
 import { Banner, Button, Card, EmptyState, KText, MicButton, ProgressRing } from '@/components/ui';
 import { Screen } from '@/components/Screen';
 import { dayKey } from '@/lib/dates';
@@ -27,6 +29,7 @@ export function TodayScreen() {
   const { c } = useTheme();
   const entries = useKalma((s) => s.entries);
   const profile = useKalma((s) => s.profile);
+  const active = useKalma((s) => s.experiments.find((x) => x.status === 'active'));
   const [now, setNow] = useState(() => new Date());
   const [quickOpen, setQuickOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -74,6 +77,27 @@ export function TodayScreen() {
       <Button variant="secondary" fullWidth label="Me empezó un síntoma" icon={(col) => <Plus size={20} color={col} />} onPress={() => setQuickOpen(true)} />
 
       <NewPatternCard />
+
+      {active && (
+        <Card style={{ gap: space[3] }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+            <FlaskConical size={20} color={c.text} />
+            <KText variant="caption" tone="brand" style={{ flex: 1 }}>EXPERIMENTO · DÍA {Math.min(active.durationDays, Math.max(1, experimentDay(active, now)))} DE {active.durationDays}</KText>
+          </View>
+          <KText variant="subheading">{active.title}</KText>
+          <AdherenceToday experiment={active} />
+          {/* Mismo enlace que "Ver detalle" del patrón (consistencia, Nielsen #4) */}
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => router.push(`/experimento/${active.id}` as Href)}
+            hitSlop={8}
+            style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-end', gap: space[1], minHeight: 44 }}
+          >
+            <KText variant="smallStrong" tone="brand">Ver el experimento</KText>
+            <ChevronRight size={20} color={c.primaryStrong} />
+          </Pressable>
+        </Card>
+      )}
 
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: space[4] }}>
         {progress.ready ? (

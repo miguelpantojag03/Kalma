@@ -14,13 +14,13 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { EMPTY_CONSENT, EMPTY_PROFILE, generateSeed } from '@/mocks/seed';
 import { uuid } from './id';
-import type { Consent, Entry, Experiment, ExtractedEvent, Profile, StoredEvent } from './schema';
+import type { Consent, DoctorVisit, Entry, Experiment, ExtractedEvent, Profile, StoredEvent } from './schema';
 
 export type Workspace = 'none' | 'demo' | `user:${string}`;
 
 export type SyncTable =
   | 'profiles' | 'consents' | 'conditions' | 'medications' | 'entries' | 'events'
-  | 'daily_context' | 'pattern_flags' | 'experiments' | 'reports' | 'reminders';
+  | 'daily_context' | 'pattern_flags' | 'experiments' | 'reports' | 'reminders' | 'doctors' | 'doctor_visits';
 
 /** Operación pendiente de enviar a Supabase. `key` identifica la fila (sin user_id: lo pone el servidor). */
 export interface SyncOp {
@@ -51,6 +51,8 @@ export interface KalmaData {
   reportPatterns: string[];
   /** Patrones que la persona ya abrió (los demás se marcan "Nuevo"). */
   seenPatterns: string[];
+  /** Visitas al médico organizadas ("Volví del médico"). */
+  doctorVisits: DoctorVisit[];
   /** Cola de sincronización (solo se usa en espacios de usuario). */
   outbox: SyncOp[];
 }
@@ -75,6 +77,9 @@ export interface KalmaState extends KalmaData {
   logAdherence: (experimentId: string, day: string, done: boolean) => void;
   endExperiment: (experimentId: string, status: 'finished' | 'cancelled') => void;
 
+  addDoctorVisit: (v: Omit<DoctorVisit, 'id'>) => DoctorVisit;
+  removeDoctorVisit: (id: string) => void;
+
   togglePatternDismissed: (patternId: string) => void;
   togglePatternInReport: (patternId: string) => void;
   markPatternSeen: (patternId: string) => void;
@@ -92,11 +97,11 @@ export interface KalmaState extends KalmaData {
 
 function demoData(): Omit<KalmaData, 'outbox'> {
   const s = generateSeed();
-  return { profile: s.profile, consent: s.consent, entries: s.entries, experiments: s.experiments, dismissedPatterns: [], reportPatterns: [], seenPatterns: [] };
+  return { profile: s.profile, consent: s.consent, entries: s.entries, experiments: s.experiments, dismissedPatterns: [], reportPatterns: [], seenPatterns: [], doctorVisits: [] };
 }
 
 export function emptyData(): KalmaData {
-  return { profile: EMPTY_PROFILE, consent: EMPTY_CONSENT, entries: [], experiments: [], dismissedPatterns: [], reportPatterns: [], seenPatterns: [], outbox: [] };
+  return { profile: EMPTY_PROFILE, consent: EMPTY_CONSENT, entries: [], experiments: [], dismissedPatterns: [], reportPatterns: [], seenPatterns: [], doctorVisits: [], outbox: [] };
 }
 
 const mapEvents = (entries: Entry[], fn: (e: StoredEvent) => StoredEvent) =>
@@ -189,6 +194,13 @@ export const useKalma = create<KalmaState>()(
       endExperiment: (experimentId, status) =>
         set((s) => ({ experiments: s.experiments.map((x) => (x.id === experimentId ? { ...x, status } : x)) })),
 
+      addDoctorVisit: (v) => {
+        const visit = { ...v, id: uuid() };
+        set((s) => ({ doctorVisits: [...s.doctorVisits, visit].sort((a, b) => b.visitedAt.localeCompare(a.visitedAt)) }));
+        return visit;
+      },
+      removeDoctorVisit: (id) => set((s) => ({ doctorVisits: s.doctorVisits.filter((v) => v.id !== id) })),
+
       togglePatternDismissed: (id) =>
         set((s) => ({
           dismissedPatterns: s.dismissedPatterns.includes(id) ? s.dismissedPatterns.filter((x) => x !== id) : [...s.dismissedPatterns, id],
@@ -211,11 +223,11 @@ export const useKalma = create<KalmaState>()(
     }),
     {
       name: SCRATCH_KEY,
-      version: 3,
+      version: 4,
       // Se hidrata a mano al abrir un espacio (AuthProvider), nunca automáticamente.
       skipHydration: true,
-      // v1 → v2: seenPatterns · v2 → v3: outbox
-      migrate: (persisted) => ({ seenPatterns: [], outbox: [], ...(persisted as object) }) as unknown as KalmaState,
+      // v1 → v2: seenPatterns · v2 → v3: outbox · v3 → v4: doctorVisits
+      migrate: (persisted) => ({ seenPatterns: [], outbox: [], doctorVisits: [], ...(persisted as object) }) as unknown as KalmaState,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: ({ lastRemoved: _l, hydrated: _h, workspace: _w, ...rest }) => rest,
     },

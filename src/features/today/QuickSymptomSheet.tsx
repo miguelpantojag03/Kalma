@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import { BottomSheet, Button, Chip, ChipGroup, IntensitySlider, useToast } from '@/components/ui';
+import { Banner, BottomSheet, Button, Chip, ChipGroup, IntensitySlider, useToast } from '@/components/ui';
+import { useCanRecord } from '@/components/NeedsConsent';
+import { haptic } from '@/lib/haptics';
 import { detectRedFlags } from '@/lib/redFlags';
 import { useKalma } from '@/lib/store';
 import { space } from '@/theme';
@@ -18,6 +20,7 @@ export function QuickSymptomSheet({ open, onClose }: { open: boolean; onClose: (
   const removeEntry = useKalma((s) => s.removeEntry);
   const conditions = useKalma((s) => s.profile.conditions);
   const showToast = useToast((s) => s.show);
+  const canRecord = useCanRecord();
   const [name, setName] = useState<string | null>(null);
   const [intensity, setIntensity] = useState(5);
 
@@ -44,6 +47,7 @@ export function QuickSymptomSheet({ open, onClose }: { open: boolean; onClose: (
         data: { name: name.toLowerCase(), body_location: null, side: null, intensity_0_10: intensity, intensity_inferred: false, character: null, duration_minutes: null },
       }],
     });
+    haptic.success();
     onClose();
     setName(null);
     setIntensity(5);
@@ -58,12 +62,13 @@ export function QuickSymptomSheet({ open, onClose }: { open: boolean; onClose: (
       description="Lo anoto con la hora de ahora. Después puedes agregar detalles."
       footer={
         <>
-          <Button fullWidth size="lg" label="Guardar" disabled={!name} onPress={save} />
+          <Button fullWidth size="lg" label="Guardar" disabled={!name || !canRecord} onPress={save} />
           <Button fullWidth variant="ghost" label="Prefiero contarlo" onPress={() => { onClose(); router.push({ pathname: '/registro', params: { auto: '1' } }); }} />
         </>
       }
     >
       <View style={{ gap: space[5] }}>
+        {!canRecord && <Banner tone="warning" title="Registrar está en pausa" message="Activa los permisos en Perfil › Privacidad y seguridad." />}
         <ChipGroup label="Síntoma" hideLabel>
           {options.map((o) => (
             <Chip key={o} label={o} selected={name === o} onPress={() => setName(o)} />

@@ -6,13 +6,19 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, Nunito_700Bold, Nunito_800ExtraBold } from '@expo-google-fonts/nunito';
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
+import { AppLock } from '@/components/AppLock';
 import { ToastHost } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/lib/auth/AuthProvider';
-import { scheduleDailyCheckin, useNotificationRouting } from '@/lib/notifications';
+import { useDeviceSettings } from '@/lib/deviceSettings';
+import { expiredIds } from '@/lib/experiments';
+import { cancelDailyCheckin, cancelExperimentReminder, scheduleDailyCheckin, useNotificationRouting } from '@/lib/notifications';
 import { useKalma } from '@/lib/store';
 import { ThemeProvider, useTheme } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
+
+// Si una pantalla falla, se ve un mensaje amable con "Intentar de nuevo" (nunca el error técnico).
+export { AppError as ErrorBoundary } from '@/components/AppError';
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({ Nunito_700Bold, Nunito_800ExtraBold, Inter_400Regular, Inter_500Medium, Inter_700Bold });
@@ -39,6 +45,9 @@ function Navigator() {
   const reminderTime = useKalma((s) => s.profile.reminderTime);
   const name = useKalma((s) => s.profile.name);
   const onboarded = useKalma((s) => s.profile.onboarded);
+  const experiments = useKalma((s) => s.experiments);
+  const endExperiment = useKalma((s) => s.endExperiment);
+  const checkinReminder = useDeviceSettings((s) => s.checkinReminder);
 
   // La splash se mantiene hasta saber a qué espacio entrar y tener su caché cargada:
   // nunca se ve un parpadeo de la bienvenida ni un "día en blanco" falso (D28, D56).
@@ -49,9 +58,21 @@ function Navigator() {
 
   useNotificationRouting();
   // Mantiene programado el check-in diario a la hora elegida (si hay permiso; si no, no hace nada).
+  // Se puede apagar en Perfil › Recordatorios.
   useEffect(() => {
-    if (onboarded && (status === 'signedIn' || status === 'demo')) void scheduleDailyCheckin(reminderTime, name || undefined);
-  }, [reminderTime, name, onboarded, status]);
+    if (!onboarded || (status !== 'signedIn' && status !== 'demo')) return;
+    if (checkinReminder) void scheduleDailyCheckin(reminderTime, name || undefined);
+    else void cancelDailyCheckin();
+  }, [reminderTime, name, onboarded, status, checkinReminder]);
+
+  // Los experimentos cuyo periodo ya pasó se cierran solos (y dejan de recordar) al abrir la app.
+  useEffect(() => {
+    if (!hydrated) return;
+    for (const id of expiredIds(experiments)) {
+      endExperiment(id, 'finished');
+      void cancelExperimentReminder(id);
+    }
+  }, [hydrated, experiments, endExperiment]);
 
   // El tema de navegación usa los mismos tokens (fondos, encabezados y transiciones sin destellos).
   const navTheme = useMemo<NavTheme>(() => {
@@ -79,11 +100,13 @@ function Navigator() {
         {/* Registro y check-in como modales: se cierran con el gesto de iOS o el botón atrás de Android */}
         <Stack.Screen name="registro" options={{ presentation: 'modal' }} />
         <Stack.Screen name="checkin" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="volvi-del-medico" options={{ presentation: 'modal' }} />
         {/* Emergencia: pantalla completa, no se descarta con un gesto por accidente */}
         <Stack.Screen name="emergencia" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
         <Stack.Screen name="design-system" options={{ headerShown: true, title: 'Design system' }} />
       </Stack>
       <ToastHost />
+      <AppLock />
     </NavThemeProvider>
   );
 }

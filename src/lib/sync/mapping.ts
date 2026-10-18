@@ -3,7 +3,7 @@
  * Puro y sin red: se prueba en Jest.
  */
 import { dayKey } from '../dates';
-import type { Entry, Experiment, Profile, StoredEvent } from '../schema';
+import type { DoctorVisit, Entry, Experiment, Profile, StoredEvent } from '../schema';
 import type { KalmaData, SyncTable } from '../store';
 
 export type Row = Record<string, unknown>;
@@ -22,6 +22,8 @@ export const KEY_COLUMNS: Record<SyncTable, string[]> = {
   experiments: ['id'],
   reports: ['id'],
   reminders: ['kind'],
+  doctors: ['name'],
+  doctor_visits: ['id'],
 };
 
 /** Columnas de conflicto para upsert (incluyen user_id cuando la clave es compuesta). */
@@ -37,12 +39,14 @@ export const ON_CONFLICT: Record<SyncTable, string> = {
   experiments: 'id',
   reports: 'id',
   reminders: 'user_id,kind',
+  doctors: 'user_id,name',
+  doctor_visits: 'id',
 };
 
 /** Orden de escritura (padres antes que hijos). Los borrados van en orden inverso. */
 export const TABLE_ORDER: SyncTable[] = [
   'profiles', 'consents', 'conditions', 'medications', 'entries', 'events',
-  'daily_context', 'pattern_flags', 'experiments', 'reports', 'reminders',
+  'daily_context', 'pattern_flags', 'experiments', 'reports', 'reminders', 'doctors', 'doctor_visits',
 ];
 
 export const rowKey = (table: SyncTable, row: Row) => KEY_COLUMNS[table].map((c) => String(row[c])).join('|') || '_';
@@ -67,7 +71,7 @@ function dailyContext(entries: Entry[], userId: string): Row[] {
   return [...byDay.values()];
 }
 
-export function toRows(d: Pick<KalmaData, 'profile' | 'consent' | 'entries' | 'experiments' | 'dismissedPatterns' | 'reportPatterns' | 'seenPatterns'>, userId: string): Tables {
+export function toRows(d: Pick<KalmaData, 'profile' | 'consent' | 'entries' | 'experiments' | 'dismissedPatterns' | 'reportPatterns' | 'seenPatterns'> & { doctorVisits?: DoctorVisit[] }, userId: string): Tables {
   const p = d.profile;
   const flags = new Set([...d.dismissedPatterns, ...d.reportPatterns, ...d.seenPatterns]);
   return {
@@ -90,9 +94,14 @@ export function toRows(d: Pick<KalmaData, 'profile' | 'consent' | 'entries' | 'e
       user_id: userId, pattern_id: id, dismissed: d.dismissedPatterns.includes(id), in_report: d.reportPatterns.includes(id), seen: d.seenPatterns.includes(id),
     })),
     experiments: d.experiments.map((x) => ({
-      id: x.id, user_id: userId, title: x.title, factor: x.factor, duration_days: x.durationDays, start_date: x.startDate, adherence: x.adherence, status: x.status,
+      id: x.id, user_id: userId, title: x.title, factor: x.factor, duration_days: x.durationDays, start_date: x.startDate, adherence: x.adherence, status: x.status, outcome: x.outcome ?? 'dolor de cabeza',
     })),
     reminders: [{ user_id: userId, kind: 'checkin', time: p.reminderTime, enabled: true }],
+    doctors: p.doctors.map((doc) => ({ user_id: userId, name: doc.name, specialty: doc.specialty })),
+    doctor_visits: (d.doctorVisits ?? []).map((v) => ({
+      id: v.id, user_id: userId, visited_at: v.visitedAt, doctor: v.doctor, transcript: v.transcript,
+      data: { diagnoses: v.diagnoses, medications: v.medications, instructions: v.instructions, followUps: v.followUps },
+    })),
   };
 }
 
@@ -105,7 +114,7 @@ export function fromRows(t: Partial<Tables>): Omit<KalmaData, 'outbox'> {
     conditions: (t.conditions ?? []).map((r) => String(r.name)),
     goals: (prof.goals as string[]) ?? [],
     medications: (t.medications ?? []).map((r) => ({ name: String(r.name), generic_name: (r.generic_name as string) ?? null, use: (r.use as Profile['medications'][number]['use']) ?? 'rescue' })),
-    doctors: [],
+    doctors: (t.doctors ?? []).map((r) => ({ name: String(r.name), specialty: String(r.specialty ?? '') })),
     reminderTime: String(prof.reminder_time ?? '21:00'),
     caregiver: { enabled: !!prof.caregiver_enabled, personName: (prof.caregiver_name as string) ?? null },
     onboarded: !!prof.onboarded,
@@ -137,7 +146,17 @@ export function fromRows(t: Partial<Tables>): Omit<KalmaData, 'outbox'> {
     experiments: (t.experiments ?? []).map((r) => ({
       id: String(r.id), title: String(r.title), factor: String(r.factor), durationDays: Number(r.duration_days) as Experiment['durationDays'],
       startDate: String(r.start_date), adherence: (r.adherence as Record<string, boolean>) ?? {}, status: r.status as Experiment['status'],
+      outcome: String(r.outcome ?? 'dolor de cabeza'),
     })),
+    doctorVisits: (t.doctor_visits ?? [])
+      .map((r) => {
+        const data = (r.data ?? {}) as Partial<DoctorVisit>;
+        return {
+          id: String(r.id), visitedAt: new Date(String(r.visited_at)).toISOString(), doctor: (r.doctor as string) ?? null, transcript: String(r.transcript ?? ''),
+          diagnoses: data.diagnoses ?? [], medications: data.medications ?? [], instructions: data.instructions ?? [], followUps: data.followUps ?? [],
+        };
+      })
+      .sort((a, b) => b.visitedAt.localeCompare(a.visitedAt)),
     dismissedPatterns: flags.filter((f) => f.dismissed).map((f) => String(f.pattern_id)),
     reportPatterns: flags.filter((f) => f.in_report).map((f) => String(f.pattern_id)),
     seenPatterns: flags.filter((f) => f.seen).map((f) => String(f.pattern_id)),

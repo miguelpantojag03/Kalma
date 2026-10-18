@@ -31,7 +31,7 @@ eas build -p android --profile preview      # APK instalable (perfiles en eas.js
 eas build -p android --profile development  # development build para seguir desarrollando con voz real
 ```
 
-Para que el APK tenga las cuentas, configura las mismas variables `EXPO_PUBLIC_…` en EAS (`eas env:create`) o en `eas.json`.
+Para que el APK tenga las cuentas, configura las mismas variables `EXPO_PUBLIC_…` en EAS (`eas env:create`). Paso a paso, perfiles, checklist antes de la prueba y problemas comunes: [docs/build.md](docs/build.md).
 
 ## Cuentas con Supabase
 
@@ -106,12 +106,16 @@ npm test            # contraste WCAG, accesibilidad, semilla, IA simulada, patro
 npm run typecheck
 npm run lint
 npm run doctor      # expo-doctor
+node scripts/check-reflow.mjs   # reflujo a 320 px (con la app corriendo; ver docs/accesibilidad.md)
 ```
 
 ## Documentación de diseño
 
 - [docs/decisiones-de-diseno.md](docs/decisiones-de-diseno.md): cada decisión con su principio, la alternativa descartada y cómo se valida.
-- [docs/accesibilidad.md](docs/accesibilidad.md): checklist WCAG 2.1 AA aplicado a móvil y tabla de contraste.
+- [docs/accesibilidad.md](docs/accesibilidad.md): checklist WCAG 2.1 AA aplicado a móvil, tabla de contraste y reflujo a 320 px.
+- [docs/heuristicas.md](docs/heuristicas.md): autoevaluación con las 10 heurísticas de Nielsen y severidad.
+- [docs/prueba-usabilidad.md](docs/prueba-usabilidad.md): guion de la prueba con 5 personas, tareas T0–T11, SUS y formato de hallazgos.
+- [docs/build.md](docs/build.md): generar el APK con EAS.
 
 ## Estado
 
@@ -126,7 +130,7 @@ npm run doctor      # expo-doctor
 | 7 | Reporte para el médico, PDF y compartir | ✅ |
 | — | Cuentas reales (Supabase): bienvenida, crear cuenta, iniciar sesión, recuperación, RLS, sincronización, eliminar cuenta | ✅ |
 | 8 | Onboarding con consentimiento | ✅ |
-| 9 | Experimentos, Volví del médico, Ajustes completos, cuidador, biometría | ⬜ |
-| 10 | Pulido, háptica, auditoría con TalkBack/VoiceOver, build con EAS | ⬜ |
+| 9 | Experimentos, Volví del médico, Ajustes completos, cuidador, biometría | ✅ |
+| 10 | Pulido (errores, 404, háptica), auditoría de accesibilidad, heurísticas, guion de prueba, build con EAS | ✅ |
 
 **Mejora futura:** inicio de sesión con Google (y Apple en iOS).

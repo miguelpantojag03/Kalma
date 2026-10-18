@@ -11,6 +11,8 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - Fase 6 · Motor de patrones: D43–D46
 - Fase 7 · Reporte para el médico: D47–D49
 - Cuentas reales (Supabase): D50–D58
+- Fase 9 · Experimentos, Volví del médico y ajustes completos: D59–D66
+- Fase 10 · Pulido y accesibilidad: D67–D70
 
 ---
 
@@ -38,7 +40,7 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - **Necesidad del usuario:** que un error común ("no te escuché") no asuste a alguien que ya tiene dolor, y que la pantalla de emergencia sí se reconozca al instante.
 - **Principio:** Nielsen #8 (un color de alarma usado para todo pierde fuerza) y #9 (errores claros y sin alarmismo). Tono "calma clínica cálida".
 - **Alternativa descartada:** la convención de rojo para todo error. En una app de salud se lee como peligro médico.
-- **Cómo se validará:** T6 (micrófono denegado) y T8 (bandera roja). Pregunta final: "¿En algún momento te sentiste alarmado/a?". En T6 la meta es que nadie diga que sí.
+- **Cómo se validará:** T2b (micrófono denegado) y T8 (bandera roja). Pregunta final: "¿En algún momento te sentiste alarmado/a?". En T2b la meta es que nadie diga que sí.
 
 ### D04. La intensidad siempre es color + número + palabra
 - **Necesidad del usuario:** comparar días de un vistazo sin depender de distinguir colores (~8 % de los hombres tiene alguna discromatopsia).
@@ -399,3 +401,79 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - **Cómo se validará:** revisión de textos con participantes de distintos géneros.
 
 > Mejora futura anotada: inicio de sesión con Google (y Apple en iOS). No se incluye todavía por decisión del equipo.
+
+## Fase 9 · Experimentos, Volví del médico y ajustes completos
+
+### D59. Los experimentos solo proponen hábitos; tocar el tratamiento se bloquea
+- **Necesidad del usuario:** probar un cambio por su cuenta ("¿y si dejo los lácteos?") sin poner en riesgo su tratamiento.
+- **Principio:** seguridad por diseño (Nielsen #5, prevención de errores). Las plantillas salen de los factores de sus patrones y son todas de hábitos. Si escribe "Otra cosa" y el texto implica dejar, bajar o cambiar un medicamento ("dejar el acetaminofén"), el campo muestra un aviso y el botón no se activa: "Los cambios en medicamentos o tratamientos se hablan primero con tu médico". Arriba de la lista hay un recordatorio fijo: "Kalma nunca te pedirá dejar un medicamento".
+- **Alternativa descartada:** permitirlo con una advertencia que se puede aceptar. Una advertencia descartable, en una app de salud, se convierte en un permiso.
+- **Cómo se validará:** T10 (crear un experimento): la persona elige una plantilla sin ayuda; revisión del caso límite con 10 frases de prueba (test unitario `touchesMedication`).
+
+### D60. Un solo experimento a la vez, y el resultado es "antes vs. durante", no una conclusión
+- **Necesidad del usuario:** saber si el cambio le sirvió, sin que la app le prometa lo que no puede saber.
+- **Principio:** honestidad de los datos y carga cognitiva baja (ley de Hick). Cambiar una sola cosa hace legible la comparación; el resultado se muestra como dos barras ("días con dolor de cabeza: 42 % antes, 23 % durante"), con texto descriptivo sin causalidad y un aviso: "Es una comparación, no una prueba. Pudieron influir otras cosas". Si no hay al menos 5 días antes y 5 durante, no se compara.
+- **Alternativa descartada:** varios experimentos en paralelo con un "puntaje de efectividad". Mezclar cambios hace imposible atribuir nada, y un puntaje parece un veredicto médico.
+- **Cómo se validará:** T10b: tras ver un resultado, la persona lo explica con sus palabras sin decir "el experimento me curó".
+
+### D61. La adherencia se anota en un toque desde Hoy, sin culpa
+- **Necesidad del usuario:** acordarse de anotar si cumplió, sin otra pantalla más.
+- **Principio:** visibilidad del estado del sistema (Nielsen #1) y diseño sin culpa (D06). Mientras haya un experimento activo, Hoy muestra una tarjeta "Experimento · día 3 de 14" con dos chips: "Sí, lo cumplí" / "Hoy no". Responder "Hoy no" muestra "No pasa nada: anotarlo también sirve para comparar bien". Un recordatorio local llega 30 minutos antes del check-in, y el experimento se cierra solo al terminar su periodo (y deja de recordar).
+- **Alternativa descartada:** rachas y medallas por días cumplidos. Castigan el día que no se pudo, y la persona deja de anotar justo los días que más sirven para comparar.
+- **Cómo se validará:** porcentaje de días anotados en la prueba de diario (meta ≥ 70 %).
+
+### D62. "Volví del médico": dictar y revisar, nunca interpretar
+- **Necesidad del usuario:** salir de la consulta y no olvidar qué le dijeron, qué le mandaron y cuándo volver.
+- **Principio:** reconocer antes que recordar (Nielsen #6) y control del usuario (#3). Se dicta como se recuerda; Kalma lo ordena en cuatro secciones editables (lo que mencionó el médico, medicamentos, indicaciones, controles) y nada se guarda sin revisión. El título es "Lo que mencionó tu médico", no "Diagnóstico": Kalma transcribe, no diagnostica. Los controles con fecha crean un recordatorio el día anterior a las 9 a. m.
+- **Alternativa descartada:** un formulario de campos vacíos para llenar en la sala de espera (lento, y la persona olvida la mitad), o que la IA "complete" dosis o explique el diagnóstico.
+- **Cómo se validará:** T11 (registrar una visita): la persona corrige al menos un dato y guarda en menos de 2 minutos.
+
+### D63. Perfil como índice: "Tu Kalma" en filas de navegación
+- **Necesidad del usuario:** encontrar todo lo que no es registrar sin buscar entre pestañas.
+- **Principio:** ley de Jakob (así se ven los ajustes en iOS y Android) y agrupación por proximidad (Gestalt). Dos grupos de filas: lo que configura la app (Mi salud, Recordatorios, Privacidad y seguridad) y lo que hace con tus datos (experimentos, Volví del médico, visitas, reporte). Toda la fila es el área táctil (Fitts), con ícono, título y una descripción que dice qué hay dentro.
+- **Alternativa descartada:** una sexta pestaña "Más". La barra ya tiene 5 destinos y el botón de registrar al centro; más destinos diluyen la acción principal.
+- **Cómo se validará:** T9 (encontrar dónde revocar un permiso): ≤ 20 s sin ayuda.
+
+### D64. Revocar un consentimiento obligatorio pausa el registro, no borra nada
+- **Necesidad del usuario:** cambiar de opinión sobre sus datos (Ley 1581, derecho a revocar) sin perder lo que ya guardó por accidente.
+- **Principio:** control y libertad (Nielsen #3) y consecuencias explícitas. Desactivar "Guardar mis datos de salud" o "Entender lo que digo con IA" pide confirmación y explica el efecto. Mientras esté apagado, registrar por voz, el check-in y el síntoma rápido muestran "Registrar está en pausa" con un botón a los permisos. Borrar los datos es una acción aparte que pide escribir "BORRAR". Cada cambio guarda su fecha.
+- **Alternativa descartada:** que revocar borre todo de inmediato (irreversible y sorpresivo) o que la app siga registrando con un aviso (incumple la revocación).
+- **Cómo se validará:** T9c: la persona revoca y vuelve a activar un permiso, y explica qué pasó con sus datos.
+
+### D65. Bloqueo con huella o rostro, opcional y apagado por defecto
+- **Necesidad del usuario:** que quien tome su celular no vea sus síntomas, sin agregar fricción a quien no lo necesita.
+- **Principio:** privacidad proporcional. Se activa en Privacidad y seguridad (pide confirmar con la huella para activarlo o quitarlo), cubre la app al abrirla y al volver tras 1 minuto en segundo plano, y si la huella falla el sistema ofrece el PIN del celular (nunca se queda sin salida). No hay PIN propio de Kalma: no se guardan contraseñas en el dispositivo.
+- **Alternativa descartada:** bloqueo obligatorio (agrega un paso a cada registro de 10 segundos) o un PIN de la app (otra contraseña que olvidar y guardar).
+- **Cómo se validará:** prueba en dispositivo con huella y sin huella configurada; la fila explica cuándo no está disponible.
+
+### D66. Los chips largos bajan de línea
+- **Necesidad del usuario:** leer opciones completas, también con letra grande.
+- **Principio:** WCAG 1.4.10 (reflujo) y 1.4.4 (cambio de tamaño del texto). "Máximo 2 tintos, ninguno después de las 2 p. m." se salía de la pantalla a 390 px; ahora el chip tiene ancho máximo del contenedor y el texto se ajusta en varias líneas.
+- **Alternativa descartada:** recortar con "…" (oculta justo la condición importante: la hora).
+- **Cómo se validará:** capturas a 320 px y con texto del sistema al 200 %.
+
+## Fase 10 · Pulido y accesibilidad
+
+### D67. Si algo falla, un mensaje humano y una salida (nunca el error técnico)
+- **Necesidad del usuario:** no asustarse ni sentirse culpable cuando la app falla, y saber que sus datos no se perdieron.
+- **Principio:** Nielsen #9 (ayudar a reconocer, diagnosticar y recuperarse de errores). Toda la app está envuelta en un *ErrorBoundary*: "Algo no salió bien. Tus registros están a salvo" con "Intentar de nuevo" e "Ir a Hoy". Un enlace viejo (p. ej., una notificación de un experimento ya borrado) abre "No encontré esta pantalla" con salida a Hoy. El detalle técnico solo va a la consola en desarrollo.
+- **Alternativa descartada:** la pantalla roja o "Unmatched route" por defecto, en inglés y con código.
+- **Cómo se validará:** forzar un error en desarrollo y abrir una ruta inexistente (verificado con capturas).
+
+### D68. Háptica con un vocabulario de cinco señales
+- **Necesidad del usuario:** confirmar sin mirar (Laura con migraña, Andrés en la calle).
+- **Principio:** consistencia (Nielsen #4) y retroalimentación multimodal. `tap` al elegir (chips, filas, pestañas), `start`/`stop` al abrir y cerrar el micrófono, `success` al guardar algo (registro, síntoma rápido, visita, adherencia) y `warning` en errores y sin conexión (centralizado en el toast). Nunca es el único feedback: siempre hay texto y estado visual, y falla en silencio si el celular no vibra.
+- **Alternativa descartada:** vibrar en cada toque de botón con la misma intensidad (pierde significado y cansa).
+- **Cómo se validará:** pregunta posterior a T2: "¿Notaste alguna vibración? ¿Te ayudó o te molestó?".
+
+### D69. Reflujo verificado a 320 px en todas las pantallas
+- **Necesidad del usuario:** usar Kalma en celulares pequeños o con zoom de pantalla.
+- **Principio:** WCAG 1.4.10. Un script recorre 16 rutas a 320 px de ancho y reporta cualquier elemento que se salga del borde o cree scroll horizontal (fuera de los carruseles intencionales).
+- **Alternativa descartada:** revisar solo a 390 px (el ancho de diseño).
+- **Cómo se validará:** el script (ver `docs/accesibilidad.md`) y revisión manual con "Tamaño de pantalla" al máximo en Android.
+
+### D70. Toda la documentación de evaluación vive junto al código
+- **Necesidad del equipo:** que el profesor pueda rastrear cada decisión hasta su validación.
+- **Principio:** trazabilidad. `decisiones-de-diseno.md` (por qué), `heuristicas.md` (autoevaluación de Nielsen con severidad), `accesibilidad.md` (WCAG), `prueba-usabilidad.md` (guion, tareas T0–T11 y SUS) y `build.md` (cómo generar el APK). Las tareas citadas en cada decisión son las mismas del guion.
+- **Alternativa descartada:** un documento final aparte que se desactualiza con cada cambio.
+- **Cómo se validará:** revisión cruzada antes de la sustentación.

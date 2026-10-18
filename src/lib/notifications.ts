@@ -95,6 +95,41 @@ export async function scheduleOneOff(title: string, body: string, url: string, s
   return true;
 }
 
+/** Recordatorio diario de un experimento ("¿Lo cumpliste hoy?"). Se cancela al terminarlo. */
+export async function scheduleExperimentReminder(id: string, title: string, time: string): Promise<boolean> {
+  if (!supported || (await getNotifPermission()) !== 'granted') return false;
+  await ensureChannel();
+  const [h, m] = time.split(':').map(Number) as [number, number];
+  // 30 minutos antes del check-in, para no juntar dos avisos
+  const total = Math.max(0, h * 60 + m - 30);
+  await Notifications.cancelScheduledNotificationAsync(`exp-${id}`).catch(() => {});
+  await Notifications.scheduleNotificationAsync({
+    identifier: `exp-${id}`,
+    content: { title: '¿Cumpliste tu experimento hoy?', body: title, data: { url: `/experimento/${id}` } },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: Math.floor(total / 60), minute: total % 60, channelId: CHANNEL },
+  });
+  return true;
+}
+
+export async function cancelExperimentReminder(id: string) {
+  if (!supported) return;
+  await Notifications.cancelScheduledNotificationAsync(`exp-${id}`).catch(() => {});
+}
+
+/** Recordatorio de un control médico: el día anterior a las 9 a. m. (si esa fecha aún no pasó). */
+export async function scheduleFollowUpReminder(label: string, dayKeyStr: string): Promise<boolean> {
+  if (!supported || (await getNotifPermission()) !== 'granted') return false;
+  const date = new Date(`${dayKeyStr}T09:00:00`);
+  date.setDate(date.getDate() - 1);
+  if (date.getTime() <= Date.now()) return false;
+  await ensureChannel();
+  await Notifications.scheduleNotificationAsync({
+    content: { title: 'Mañana tienes control médico', body: label, data: { url: '/visitas' } },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date, channelId: CHANNEL },
+  });
+  return true;
+}
+
 /** Al tocar una notificación (en frío o con la app abierta), navega a su data.url. */
 export function useNotificationRouting() {
   useEffect(() => {

@@ -50,7 +50,7 @@ export function Chip({ label, selected = false, onPress, mode = 'single', icon, 
       ) : (
         icon && <View importantForAccessibility="no-hide-descendants">{icon(c.text)}</View>
       )}
-      <KText style={[compact ? typeScale.small : typeScale.body, { fontFamily: 'Inter_500Medium' }]}>{label}</KText>
+      <KText style={[compact ? typeScale.small : typeScale.body, { fontFamily: 'Inter_500Medium', flexShrink: 1 }]}>{label}</KText>
     </Pressable>
   );
 }
@@ -83,6 +83,9 @@ const styles = StyleSheet.create({
     gap: space[2],
     borderRadius: radius.full,
     borderWidth: 2,
+    // Un texto largo (o con letra grande del sistema) baja de línea en vez de salirse de la pantalla
+    maxWidth: '100%',
+    paddingVertical: space[2],
   },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
 });
