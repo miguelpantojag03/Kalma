@@ -24,10 +24,15 @@ const TIMEOUT_MS = 9000;
 /** Hora local con desfase ("2026-10-18T14:05:00-05:00"): así la IA ubica "a las 3" en el día correcto. */
 export const localIso = (d: Date) => format(d, "yyyy-MM-dd'T'HH:mm:ssXXX");
 
-async function callAi(task: 'entry' | 'visit', text: string, now: Date): Promise<unknown | null> {
-  if (!supabase || text.length > 1500) return null;
-  const call = supabase.functions.invoke('ai', { body: { task, text, now: localIso(now) } });
-  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), TIMEOUT_MS));
+type AiRequest =
+  | { task: 'entry' | 'visit'; text: string }
+  | { task: 'photo'; image: string; mimeType: string };
+
+async function callAi(req: AiRequest, now: Date, timeoutMs = TIMEOUT_MS): Promise<unknown | null> {
+  if (!supabase) return null;
+  if (req.task !== 'photo' && req.text.length > 1500) return null;
+  const call = supabase.functions.invoke('ai', { body: { ...req, now: localIso(now) } });
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
   try {
     const res = await Promise.race([call, timeout]);
     if (!res || res.error || !res.data || typeof res.data !== 'object') return null;
@@ -72,7 +77,7 @@ export function validEvents(result: unknown, now: Date): ExtractedEvent[] {
 /** Entiende un registro: Gemini si está disponible; si no, el analizador local. */
 export async function understandEntry(text: string, recordedAt: Date): Promise<{ extraction: Extraction; engine: Engine }> {
   const local = () => extractEntry(text, { recordedAt: recordedAt.toISOString(), latencyMs: 0 });
-  const result = await callAi('entry', text, recordedAt);
+  const result = await callAi({ task: 'entry', text }, recordedAt);
   const events = result ? validEvents(result, recordedAt) : [];
   if (events.length === 0) return { extraction: await local(), engine: 'local' };
 
@@ -97,11 +102,37 @@ const VisitSchema = z.object({
 
 /** Ordena lo que dijo el médico: Gemini si está disponible; si no, el organizador local. */
 export async function organizeVisitAI(text: string, base = new Date()): Promise<{ visit: OrganizedVisit; engine: Engine }> {
-  const result = await callAi('visit', text, base);
+  const result = await callAi({ task: 'visit', text }, base);
   const parsed = result ? VisitSchema.safeParse(result) : null;
   const v = parsed?.success ? parsed.data : null;
   if (!v || v.diagnoses.length + v.medications.length + v.instructions.length + v.followUps.length === 0) {
     return { visit: await organizeVisit(text, base, 0), engine: 'local' };
   }
   return { visit: v, engine: 'gemini' };
+}
+
+/** Fotos de hasta ~4,5 MB (el límite de la función); más grandes no se envían. */
+const MAX_IMAGE_B64 = 6_000_000;
+
+/**
+ * Reconoce una foto (plato, bebida o empaque de medicamento) con Gemini. Devuelve null si no hay IA,
+ * falla o la foto no muestra nada registrable: en ese caso la app pide describirla por texto
+ * (nunca inventa un plato). `seen` es lo que la IA dice que hay en la foto cuando no es comida.
+ */
+export async function understandPhoto(base64: string, mimeType: string, takenAt: Date): Promise<{ extraction: Extraction | null; seen: string | null }> {
+  if (!base64 || base64.length > MAX_IMAGE_B64) return { extraction: null, seen: null };
+  const result = await callAi({ task: 'photo', image: base64, mimeType }, takenAt, 20000);
+  if (!result) return { extraction: null, seen: null };
+  const events = validEvents(result, takenAt).map((e) => ({ ...e, confidence: Math.min(e.confidence, 0.8), source_text: 'foto' }));
+  const unparsed = (result as { unparsed?: unknown }).unparsed;
+  const seen = typeof unparsed === 'string' && unparsed.trim() ? unparsed.trim() : null;
+  if (events.length === 0) return { extraction: null, seen };
+  const extraction = ExtractionSchema.parse({
+    summary: summarize(events),
+    events,
+    red_flag: { detected: false, categories: [], evidence: null },
+    follow_up: buildFollowUp(events, false),
+    unparsed: null,
+  });
+  return { extraction, seen };
 }
