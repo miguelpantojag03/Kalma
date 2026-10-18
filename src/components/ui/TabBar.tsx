@@ -30,7 +30,7 @@ export interface TabBarProps extends BottomTabBarProps {
  * El micrófono queda al centro, grande y elevado: es la acción más frecuente y cae en la zona
  * natural del pulgar (ley de Fitts); patrón conocido de apps móviles (ley de Jakob).
  */
-export function TabBar({ state, descriptors, emitter, navigateToTab, insets, onRecord, badges = {} }: TabBarProps) {
+export function TabBar({ state, descriptors, navigation, insets, onRecord, badges = {} }: TabBarProps) {
   const { c } = useTheme();
   const routes = state.routes.filter((r) => TAB_META[r.name]);
   const left = routes.slice(0, 2);
@@ -54,10 +54,10 @@ export function TabBar({ state, descriptors, emitter, navigateToTab, insets, onR
         testID={options?.tabBarButtonTestID}
         onPress={() => {
           haptic.tap();
-          const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-          if (!focused && !event.defaultPrevented) navigateToTab(route.key);
+          const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+          if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
         }}
-        onLongPress={() => emitter.emit({ type: 'tabLongPress', target: route.key })}
+        onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
         style={styles.tab}
       >
         <View style={[styles.pill, focused && { backgroundColor: c.accent }]}>

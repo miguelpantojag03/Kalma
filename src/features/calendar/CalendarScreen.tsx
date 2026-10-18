@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { addMonths, addWeeks, isAfter, isSameDay, startOfMonth } from 'date-fns';
-import { Directions, GestureDetector, useFlingGesture, useSimultaneousGestures } from 'react-native-gesture-handler';
+import { Directions, Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { CalendarDay, Card, Chip, ChipGroup, EmptyState, IntensityBadge, KText } from '@/components/ui';
@@ -39,9 +39,10 @@ export function CalendarScreen() {
     setAnchor((a) => (mode === 'month' ? addMonths(a, dir) : addWeeks(a, dir)));
   };
 
-  const next = useFlingGesture({ direction: Directions.LEFT, runOnJS: true, onActivate: () => move(1) });
-  const prev = useFlingGesture({ direction: Directions.RIGHT, runOnJS: true, onActivate: () => move(-1) });
-  const swipe = useSimultaneousGestures(next, prev);
+  // Deslizar a la izquierda = siguiente; a la derecha = anterior (gesture-handler v2)
+  const next = Gesture.Fling().direction(Directions.LEFT).runOnJS(true).onEnd((_e, ok) => ok && move(1));
+  const prev = Gesture.Fling().direction(Directions.RIGHT).runOnJS(true).onEnd((_e, ok) => ok && move(-1));
+  const swipe = Gesture.Simultaneous(next, prev);
 
   const weeks = useMemo(() => monthMatrix(anchor), [anchor]);
   const week = useMemo(() => weekDays(anchor), [anchor]);

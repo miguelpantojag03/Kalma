@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
-import { Platform, StyleSheet, TextInput, View, type TextInputInstance, type TextInputProps } from 'react-native';
+import { Platform, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import { announce } from '@/lib/a11y';
 import { fontFamily, radius, space, useTheme } from '@/theme';
 import { KText } from './KText';
@@ -13,7 +13,7 @@ export interface TextFieldProps extends TextInputProps {
   hideLabel?: boolean;
   /** Contenido a la derecha dentro del campo (p. ej. "Mostrar" en contraseñas). */
   trailing?: ReactNode;
-  ref?: Ref<TextInputInstance>;
+  ref?: Ref<TextInput>;
 }
 
 /**

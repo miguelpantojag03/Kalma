@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { View, type TextInputInstance } from 'react-native';
+import { TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Banner, Button, KText, PasswordField, TextField, useToast } from '@/components/ui';
 import { Screen } from '@/components/Screen';
@@ -25,7 +25,7 @@ export function SignInScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<FriendlyAuthError | null>(null);
   const sending = useRef(false);
-  const passwordRef = useRef<TextInputInstance>(null);
+  const passwordRef = useRef<TextInput>(null);
 
   const valid = isValidEmail(email) && password.length > 0;
 

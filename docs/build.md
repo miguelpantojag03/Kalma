@@ -44,6 +44,19 @@ eas build -p android --profile preview
 
 Al terminar (≈ 10–15 min en la cola gratuita), EAS muestra un enlace y un QR para descargar el APK. En el celular: permitir "instalar apps de origen desconocido" para el navegador.
 
+### Alternativa: APK local, sin EAS
+
+Si el computador tiene el SDK de Android (Android Studio) y Java 17+, el APK se puede generar sin cuenta. Toma las variables del `.env` local.
+
+```bash
+npx expo prebuild -p android --no-install     # genera android/ (no se versiona)
+cd android
+ANDROID_HOME="$LOCALAPPDATA/Android/Sdk" NODE_ENV=production ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+# → android/app/build/outputs/apk/release/app-release.apk
+```
+
+La primera vez tarda unos 30 minutos y las siguientes, pocos. Queda firmado con la llave de depuración: sirve para instalarlo en celulares de prueba, no para Play Store. `prebuild` cambia los scripts `android`/`ios` de `package.json` a `expo run:*`; hay que devolverlos a `expo start --android/--ios`.
+
 ## 4. Antes de la prueba con participantes
 
 1. Instalar el APK y abrir **Explorar con datos de ejemplo** para confirmar que la demo carga.
