@@ -130,6 +130,15 @@ export async function scheduleFollowUpReminder(label: string, dayKeyStr: string)
   return true;
 }
 
+/**
+ * Al cerrar sesión, eliminar la cuenta, salir de la demo o borrar los datos: ningún recordatorio con
+ * datos de esa persona (su nombre, sus experimentos, sus controles) sigue llegando al celular.
+ */
+export async function cancelAllReminders() {
+  if (!supported) return;
+  await Notifications.cancelAllScheduledNotificationsAsync().catch(() => {});
+}
+
 /** Al tocar una notificación (en frío o con la app abierta), navega a su data.url. */
 export function useNotificationRouting() {
   useEffect(() => {

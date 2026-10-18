@@ -11,7 +11,7 @@ import { ToastHost } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/lib/auth/AuthProvider';
 import { useDeviceSettings } from '@/lib/deviceSettings';
 import { expiredIds } from '@/lib/experiments';
-import { cancelDailyCheckin, cancelExperimentReminder, scheduleDailyCheckin, useNotificationRouting } from '@/lib/notifications';
+import { cancelDailyCheckin, cancelExperimentReminder, scheduleDailyCheckin, scheduleExperimentReminder, useNotificationRouting } from '@/lib/notifications';
 import { useKalma } from '@/lib/store';
 import { ThemeProvider, useTheme } from '@/theme';
 
@@ -64,6 +64,16 @@ function Navigator() {
     if (checkinReminder) void scheduleDailyCheckin(reminderTime, name || undefined);
     else void cancelDailyCheckin();
   }, [reminderTime, name, onboarded, status, checkinReminder]);
+
+  // El recordatorio del experimento activo se reprograma al entrar (otro celular, otra sesión o
+  // nueva hora del check-in). Usa un identificador fijo, así que no se duplica.
+  const active = experiments.find((x) => x.status === 'active');
+  const activeId = active?.id;
+  const activeTitle = active?.title;
+  useEffect(() => {
+    if (!hydrated || !activeId || !activeTitle || (status !== 'signedIn' && status !== 'demo')) return;
+    void scheduleExperimentReminder(activeId, activeTitle, reminderTime);
+  }, [hydrated, status, activeId, activeTitle, reminderTime]);
 
   // Los experimentos cuyo periodo ya pasó se cierran solos (y dejan de recordar) al abrir la app.
   useEffect(() => {
