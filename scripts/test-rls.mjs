@@ -22,7 +22,7 @@ const check = (name, ok, detail = '') => {
 async function newUser(tag) {
   const client = createClient(url, anon, { auth: { persistSession: false } });
   const email = `rls-${tag}-${Date.now()}@example.com`;
-  const { data, error } = await client.auth.signUp({ email, password: 'pruebaRLS2026', options: { data: { name: `Prueba ${tag}` } } });
+  const { data, error } = await client.auth.signUp({ email, password: `Kalma-${crypto.randomUUID()}`, options: { data: { name: `Prueba ${tag}` } } });
   if (error || !data.session) throw new Error(`No pude crear el usuario ${tag}: ${error?.message ?? 'sin sesión (¿confirmación de correo activa?)'}`);
   return { client, id: data.user.id };
 }

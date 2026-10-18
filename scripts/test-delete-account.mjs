@@ -6,7 +6,8 @@ import { createClient } from '@supabase/supabase-js';
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 const email = `borrar-${Date.now()}@example.com`;
-const password = 'pruebaBorrar2026';
+// Contraseña aleatoria en cada ejecución (nunca una contraseña fija en un repositorio público)
+const password = `Kalma-${crypto.randomUUID()}`;
 
 const c = createClient(url, anon, { auth: { persistSession: false } });
 const { data: su, error: e1 } = await c.auth.signUp({ email, password, options: { data: { name: 'Para borrar' } } });
