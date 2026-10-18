@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCanRecord } from '@/components/NeedsConsent';
 import { closeModal } from '@/lib/nav';
@@ -73,7 +74,7 @@ export function CrisisScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
-      <StatusBar barStyle="light-content" backgroundColor={C.bg} />
+      <StatusBar style="light" />
       <View style={styles.wrap}>
         <Pressable accessibilityRole="button" onPress={closeModal} hitSlop={12} style={styles.close}>
           <Text style={styles.small}>Cerrar</Text>
