@@ -105,6 +105,24 @@ Crea dos usuarios de prueba y comprueba que B no puede leer, modificar, borrar n
 - **Demo** (`Explorar con datos de ejemplo`): los 45 días de Laura, solo en el celular, en un espacio propio. Nunca se envían a Supabase.
 - **Cuenta real**: empieza vacía. Caché local por usuario (funciona sin conexión) + cola de cambios que se envía cuando hay internet. Cerrar sesión borra la caché local de esa cuenta; eliminar la cuenta borra todo en Supabase.
 
+## Seguridad: qué es público y qué es secreto
+
+Este repositorio es **público**. Nada de lo que está aquí da acceso a datos de nadie.
+
+| Dato | ¿Dónde vive? | ¿Es secreto? |
+|---|---|---|
+| URL del proyecto de Supabase y llave *publishable* (anon) | `.env` (no se versiona) y dentro de la app instalada | **No, por diseño.** Viaja en la app. Lo que protege los datos son las políticas **RLS**: cada persona solo lee y escribe lo suyo (verificado con `scripts/test-rls.mjs`). |
+| Llave `service_role` / *secret* de Supabase | Solo en Supabase (la recibe la función `delete-account`) | **Sí.** Nunca en la app, en `.env` ni en el repositorio. |
+| Llave de Google Gemini | Secreto de Supabase (`GEMINI_API_KEY`), solo la ve la función `ai` | **Sí.** Nunca en la app ni en el repositorio. |
+| Sesión de la CLI de Supabase y de Expo | Tu computador | **Sí.** No se versiona. |
+| Keystore de Android, APK, certificados | Tu computador (`android/` y builds están en `.gitignore`) | **Sí.** |
+
+Reglas:
+- **Nunca** pegues llaves en el código, en un issue, en un commit ni en un chat. Las llaves se guardan con `npx supabase secrets set NOMBRE=valor` o `eas env:create`.
+- Si una llave secreta se filtra, **revócala y crea otra** en su panel (Supabase › Settings › API keys, o Google AI Studio). Borrarla del repositorio no basta: queda en el historial.
+- La llave de Gemini es del plan gratuito y su proyecto de Google **no debe tener facturación activada**: así, si alguien abusara de la función `ai`, lo peor que puede pasar es que se agote la cuota del día (la app sigue con su analizador local).
+- Las pruebas que crean cuentas usan correos `@example.com` y contraseñas aleatorias, y borran lo que crean cuando pueden.
+
 ## Datos de la demo
 
 **Laura**: 45 días sintéticos (42 con registros) con dos patrones planteados (dormir < 6 h → dolor de cabeza 6–24 h después; lácteos → molestia digestiva 0–6 h después), ruido independiente y un experimento terminado. En Perfil › Demo puedes reiniciarla. El detalle está en [src/mocks/seed.ts](src/mocks/seed.ts).
