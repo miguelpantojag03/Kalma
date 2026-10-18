@@ -1,0 +1,132 @@
+# Kalma
+
+> Cuéntale a Kalma cómo te sientes. Ella encuentra el patrón.
+
+App móvil (Android e iOS) para la materia **Diseño de Interfaces**. Kalma convierte un audio de 10 segundos en datos de salud, busca patrones entre hábitos y síntomas (migraña y molestias digestivas) y arma un reporte de una página para el médico.
+
+**Kalma no diagnostica, no receta y no reemplaza al médico.** La IA está simulada con mocks realistas; las cuentas y los datos por usuario usan Supabase.
+
+Stack: Expo SDK 58 · React Native 0.88 · TypeScript strict · Expo Router · Reanimated 4 · Zustand · Supabase · Storybook RN.
+
+## Correr la app
+
+Requiere Node 20 o superior.
+
+```bash
+npm install
+cp .env.example .env    # y completa los datos de Supabase (ver abajo); sin .env la app funciona solo en modo demo
+npx expo start          # escanea el QR con Expo Go (Android) o con la cámara (iOS)
+```
+
+**En Expo Go** funciona todo menos la voz real: el reconocimiento de voz es un módulo nativo que Expo Go no incluye. La app lo detecta y ofrece transcripciones de ejemplo y texto libre, sin errores.
+
+> Si la App Store o Google Play todavía no tienen el Expo Go de la SDK 58, usa la versión web (`w` en la terminal de Expo) o un development build.
+
+### Generar el APK (voz real, pruebas de usabilidad y sustentación)
+
+```bash
+npm i -g eas-cli        # o usa npx eas-cli@latest
+eas login
+eas build -p android --profile preview      # APK instalable (perfiles en eas.json)
+eas build -p android --profile development  # development build para seguir desarrollando con voz real
+```
+
+Para que el APK tenga las cuentas, configura las mismas variables `EXPO_PUBLIC_…` en EAS (`eas env:create`) o en `eas.json`.
+
+## Cuentas con Supabase
+
+### 1. Crear el proyecto
+1. Entra a [supabase.com](https://supabase.com) y crea un proyecto (plan gratuito).
+2. En **Project Settings › API** copia la **Project URL** y la **anon public key** a tu `.env`:
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+   ```
+   La anon key es pública por diseño: la protegen las políticas RLS. **Nunca** pongas la `service_role` key en `.env`, en la app ni en el repositorio.
+3. Reinicia Expo (`npx expo start --clear`) para que tome las variables.
+
+### 2. Crear las tablas (migraciones)
+Con la [CLI de Supabase](https://supabase.com/docs/guides/cli):
+```bash
+npx supabase login
+npx supabase link --project-ref <tu-ref>      # el ref está en la URL del proyecto
+npx supabase db push                          # aplica supabase/migrations/
+```
+O, sin CLI: abre **SQL Editor** en el panel, pega el contenido de [supabase/migrations/20261017000000_kalma_init.sql](supabase/migrations/20261017000000_kalma_init.sql) y ejecútalo.
+
+La migración crea 11 tablas (perfiles, consentimientos, condiciones, medicamentos, registros, eventos, contexto diario, preferencias de patrones, experimentos, reportes y recordatorios), todas con `user_id → auth.users on delete cascade`, **RLS activado** con políticas de select/insert/update/delete (`user_id = auth.uid()`) y el trigger que crea el perfil al registrarse.
+
+### 3. URL de redirección (confirmar correo y recuperar contraseña)
+En **Authentication › URL Configuration**:
+- **Site URL:** `kalma://`
+- **Redirect URLs:** agrega
+  - `kalma://**` (APK y development build)
+  - `exp://**` (Expo Go; la dirección exacta cambia según la red, por eso el comodín)
+
+Los enlaces de correo abren la app en `auth/callback` (confirmación) o en `nueva-contrasena` (recuperación). Ábrelos **en el mismo celular** donde los pediste.
+
+### 4. Confirmación de correo: activar o desactivar
+En **Authentication › Providers › Email › Confirm email**:
+- **Activada** (recomendado en producción): al crear la cuenta aparece "Revisa tu correo" y la persona entra al confirmar.
+- **Desactivada** (recomendado para las **pruebas de usabilidad**): la cuenta entra directo al onboarding, sin depender del correo de cada participante. Si la desactivas para una sesión de pruebas, déjalo anotado en el protocolo y vuelve a activarla después.
+
+### 5. Desplegar la función de eliminar cuenta
+La app nunca tiene la `service_role` key: eliminar la cuenta lo hace una Edge Function del lado del servidor.
+```bash
+npx supabase functions deploy delete-account
+```
+Supabase le entrega automáticamente `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`. La función verifica quién llama con su propio token y solo borra a esa persona (sus datos se eliminan en cascada).
+
+### 6. Verificar que dos cuentas no se ven entre sí
+Con la confirmación de correo **desactivada**:
+```bash
+node --env-file=.env scripts/test-rls.mjs
+```
+Crea dos usuarios de prueba y comprueba que B no puede leer, modificar, borrar ni escribir a nombre de A, que sin sesión no se ve nada y que el trigger crea el perfil. Al final borra las cuentas de prueba (si la función `delete-account` está desplegada).
+
+### Cómo se separan los datos
+- **Demo** (`Explorar con datos de ejemplo`): los 45 días de Laura, solo en el celular, en un espacio propio. Nunca se envían a Supabase.
+- **Cuenta real**: empieza vacía. Caché local por usuario (funciona sin conexión) + cola de cambios que se envía cuando hay internet. Cerrar sesión borra la caché local de esa cuenta; eliminar la cuenta borra todo en Supabase.
+
+## Datos de la demo
+
+**Laura**: 45 días sintéticos (42 con registros) con dos patrones planteados (dormir < 6 h → dolor de cabeza 6–24 h después; lácteos → molestia digestiva 0–6 h después), ruido independiente y un experimento terminado. En Perfil › Demo puedes reiniciarla. El detalle está en [src/mocks/seed.ts](src/mocks/seed.ts).
+
+## Design system
+
+- **Tokens:** [src/theme/tokens.ts](src/theme/tokens.ts) (claro y oscuro), [src/theme/typography.ts](src/theme/typography.ts).
+- **Componentes:** [src/components/ui/](src/components/ui/) (incluye TextField, PasswordField, PasswordRequirements y Checkbox).
+- **Catálogo en la app:** Perfil › *Ver el design system*. Funciona en Expo Go e incluye la tabla de contraste en vivo.
+- **Storybook RN:** `npm run storybook:app`; luego abre la ruta `/storybook` en la app. Solo entra al bundle en ese modo.
+
+## Calidad
+
+```bash
+npm test            # contraste WCAG, accesibilidad, semilla, IA simulada, patrones, reporte, cuentas, espacios y sincronización
+npm run typecheck
+npm run lint
+npm run doctor      # expo-doctor
+```
+
+## Documentación de diseño
+
+- [docs/decisiones-de-diseno.md](docs/decisiones-de-diseno.md): cada decisión con su principio, la alternativa descartada y cómo se valida.
+- [docs/accesibilidad.md](docs/accesibilidad.md): checklist WCAG 2.1 AA aplicado a móvil y tabla de contraste.
+
+## Estado
+
+| Fase | Contenido | Estado |
+|---|---|---|
+| 1 | Proyecto Expo, tokens, fuentes, tema claro/oscuro, componentes, Storybook, pestañas | ✅ |
+| 2 | Datos semilla (45 días) y store con persistencia | ✅ |
+| 3 | Registro por voz completo + permisos + pantalla de emergencia | ✅ |
+| 4 | Hoy y Calendario | ✅ |
+| 5 | Check-in nocturno con notificación local | ✅ |
+| 6 | Motor de patrones y pantallas de Patrones | ✅ |
+| 7 | Reporte para el médico, PDF y compartir | ✅ |
+| — | Cuentas reales (Supabase): bienvenida, crear cuenta, iniciar sesión, recuperación, RLS, sincronización, eliminar cuenta | ✅ |
+| 8 | Onboarding con consentimiento | ✅ |
+| 9 | Experimentos, Volví del médico, Ajustes completos, cuidador, biometría | ⬜ |
+| 10 | Pulido, háptica, auditoría con TalkBack/VoiceOver, build con EAS | ⬜ |
+
+**Mejora futura:** inicio de sesión con Google (y Apple en iOS).
