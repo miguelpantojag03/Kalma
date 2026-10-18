@@ -7,6 +7,7 @@ import { Camera, Images, Keyboard, ListChecks, X } from 'lucide-react-native';
 import {
   AudioWave, Banner, BottomSheet, Button, Chip, EmptyState, KText, Mascot, MicButton, PermissionPrompt, TextField, useToast,
 } from '@/components/ui';
+import { NeedsConsent, useCanRecord } from '@/components/NeedsConsent';
 import { Screen } from '@/components/Screen';
 import { dayKey, fromDayKey, fullDate } from '@/lib/dates';
 import { haptic } from '@/lib/haptics';
@@ -51,6 +52,7 @@ export function RecordScreen() {
   const caregiver = useKalma((s) => s.profile.caregiver);
   const showToast = useToast((s) => s.show);
   const { pending, setPending } = useSession();
+  const canRecord = useCanRecord();
   const online = useOnline();
 
   // Si se vuelve de la pantalla de emergencia con "fue un error", se retoma la confirmación pendiente.
@@ -192,6 +194,14 @@ export function RecordScreen() {
   };
 
   /* ---------- vistas ---------- */
+
+  if (!canRecord && phase.k !== 'saved') {
+    return (
+      <Screen scroll={false} edges={['top', 'bottom']}>
+        <NeedsConsent />
+      </Screen>
+    );
+  }
 
   if (phase.k === 'saved') {
     return (

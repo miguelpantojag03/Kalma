@@ -5,6 +5,7 @@ import { Bell, CircleCheck, Info, TriangleAlert, WifiOff, X, type LucideIcon } f
 import { create } from 'zustand';
 import { elevation, layout, radius, space, touch, useTheme, type ColorTokens } from '@/theme';
 import { announce } from '@/lib/a11y';
+import { haptic } from '@/lib/haptics';
 import { KText } from './KText';
 
 export type FeedbackTone = 'success' | 'info' | 'warning' | 'offline' | 'error' | 'reminder';
@@ -91,6 +92,8 @@ export function ToastHost({ bottomOffset = layout.tabBarHeight + space[5] }: { b
   useEffect(() => {
     if (!current) return;
     announce(current.message);
+    // Los problemas también se sienten (háptica de advertencia); los éxitos ya vibran en su acción
+    if (current.tone === 'error' || current.tone === 'offline') haptic.warning();
     const t = setTimeout(hide, current.actionLabel ? 7000 : 4000);
     return () => clearTimeout(t);
   }, [current, hide]);

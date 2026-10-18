@@ -144,8 +144,27 @@ export const ExperimentSchema = z.object({
   /** yyyy-MM-dd → ¿lo cumplió ese día? */
   adherence: z.record(z.string(), z.boolean()),
   status: z.enum(['active', 'finished', 'cancelled']),
+  /** Síntoma con el que se compara antes vs. durante. */
+  outcome: z.string().default('dolor de cabeza'),
 });
 export type Experiment = z.infer<typeof ExperimentSchema>;
+
+/**
+ * "Volví del médico": lo que la persona contó que dijo su médico, organizado.
+ * Kalma solo ordena lo que la persona dijo; no interpreta ni agrega indicaciones.
+ */
+export const DoctorVisitSchema = z.object({
+  id: z.string(),
+  visitedAt: isoDate,
+  doctor: z.string().nullable(),
+  transcript: z.string(),
+  /** "Lo que mencionó tu médico" (nunca se presenta como diagnóstico de Kalma). */
+  diagnoses: z.array(z.string()),
+  medications: z.array(z.object({ name: z.string(), dose: z.string().nullable(), frequency: z.string().nullable() })),
+  instructions: z.array(z.string()),
+  followUps: z.array(z.object({ label: z.string(), date: z.string().nullable() })), // date: yyyy-MM-dd
+});
+export type DoctorVisit = z.infer<typeof DoctorVisitSchema>;
 
 export const ConsentSchema = z.object({
   health: z.boolean(),

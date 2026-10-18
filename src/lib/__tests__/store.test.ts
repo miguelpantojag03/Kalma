@@ -78,7 +78,7 @@ describe('store', () => {
   });
 
   it('experimentos: crear, registrar adherencia y terminar', () => {
-    s().startExperiment({ title: 'Menos tinto después de las 2 p. m.', factor: 'cafeína', durationDays: 7, startDate: '2026-10-17' });
+    s().startExperiment({ title: 'Menos tinto después de las 2 p. m.', factor: 'cafeína', durationDays: 7, startDate: '2026-10-17', outcome: 'dolor de cabeza' });
     const id = s().experiments[0]!.id;
     s().logAdherence(id, '2026-10-17', true);
     expect(s().experiments[0]!.adherence).toEqual({ '2026-10-17': true });

@@ -19,3 +19,4 @@ export * from './TextField';
 export * from './CompareBars';
 export * from './Checkbox';
 export * from './PasswordField';
+export * from './ListRow';

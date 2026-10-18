@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft, useReducedMotion } from 'react-native-reanimated';
 import { X } from 'lucide-react-native';
 import { Button, Chip, EmptyState, KText, Mascot } from '@/components/ui';
+import { NeedsConsent, useCanRecord } from '@/components/NeedsConsent';
 import { Screen } from '@/components/Screen';
 import { buildCheckin } from '@/lib/checkin';
 import { dayKey } from '@/lib/dates';
@@ -24,6 +25,7 @@ export function CheckinScreen() {
   const entries = useKalma((s) => s.entries);
   const addEntry = useKalma((s) => s.addEntry);
   const name = useKalma((s) => s.profile.name);
+  const canRecord = useCanRecord();
 
   const today = dayKey(new Date());
   const already = entries.some((e) => e.source === 'checkin' && dayKey(e.recordedAt) === today);
@@ -64,6 +66,14 @@ export function CheckinScreen() {
   };
 
   const progressLabel = useMemo(() => `Pregunta ${step + 1} de ${questions.length}`, [step, questions.length]);
+
+  if (!canRecord && done === null) {
+    return (
+      <Screen scroll={false} edges={['top', 'bottom']}>
+        <NeedsConsent />
+      </Screen>
+    );
+  }
 
   if (done !== null) {
     return (

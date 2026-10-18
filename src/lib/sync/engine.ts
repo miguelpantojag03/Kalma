@@ -19,7 +19,7 @@ let flushing = false;
 let timer: ReturnType<typeof setTimeout> | null = null;
 const cleanups: (() => void)[] = [];
 
-const DATA_KEYS = ['profile', 'consent', 'entries', 'experiments', 'dismissedPatterns', 'reportPatterns', 'seenPatterns'] as const;
+const DATA_KEYS = ['profile', 'consent', 'entries', 'experiments', 'dismissedPatterns', 'reportPatterns', 'seenPatterns', 'doctorVisits'] as const;
 const dataChanged = (a: KalmaState, b: KalmaState) => DATA_KEYS.some((k) => a[k] !== b[k]);
 
 /** Empieza a escuchar cambios del store del usuario y a enviarlos. */
@@ -110,7 +110,7 @@ export async function flush(): Promise<boolean> {
   }
 }
 
-const PULL_TABLES = ['profiles', 'consents', 'conditions', 'medications', 'entries', 'events', 'pattern_flags', 'experiments'] as const;
+const PULL_TABLES = ['profiles', 'consents', 'conditions', 'medications', 'entries', 'events', 'pattern_flags', 'experiments', 'doctors', 'doctor_visits'] as const;
 
 /** Descarga los datos de la cuenta y reemplaza la caché local (solo si no hay nada pendiente). */
 export async function pull(): Promise<boolean> {

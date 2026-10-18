@@ -303,6 +303,7 @@ export function generateSeed({ now = new Date(), seed = 20261017, days = 45 }: {
       startDate: dayKey(subDays(today, EXPERIMENT_DAYS_AGO.start)),
       adherence,
       status: 'finished',
+      outcome: 'dolor de cabeza',
     }],
     profile: {
       name: 'Laura',
