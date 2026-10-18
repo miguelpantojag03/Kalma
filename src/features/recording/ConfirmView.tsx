@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Image, ScrollView, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, LinearTransition, useReducedMotion } from 'react-native-reanimated';
 import { Plus } from 'lucide-react-native';
 import { Banner, BottomSheet, Button, Chip, ChipGroup, EventCard, KText, TextField, useToast } from '@/components/ui';
@@ -7,7 +7,7 @@ import { formatTime, partOfDay } from '@/lib/dates';
 import { describeEvent } from '@/lib/describeEvent';
 import type { Extraction, ExtractedEvent, StoredEvent } from '@/lib/schema';
 import { applyFollowUpAnswer } from '@/mocks/extractEntry';
-import { layout, space } from '@/theme';
+import { layout, radius, space } from '@/theme';
 import { EventEditorSheet } from './EventEditorSheet';
 
 export interface ConfirmViewProps {
@@ -20,6 +20,8 @@ export interface ConfirmViewProps {
   onDiscard: () => void;
   /** Quién lo entendió: se dice con transparencia (consentimiento «Entender lo que digo con IA»). */
   engine?: 'gemini' | 'local';
+  /** Foto elegida y lo que Gemini vio en ella (registro con foto). */
+  photo?: { uri: string; caption: string | null };
 }
 
 /** Cada tarjeta lleva id estable e índice original: quitar o editar no corre las marcas a otra tarjeta. */
@@ -42,7 +44,7 @@ function whenLabel(e: ExtractedEvent) {
  * Todo lo que la IA extrajo es visible y editable ANTES de guardarse (principio 3 del brief).
  * Máximo una pregunta de seguimiento, que se puede saltar.
  */
-export function ConfirmView({ extraction, transcript, recordedAt, onAddMore, onSave, onDiscard, engine }: ConfirmViewProps) {
+export function ConfirmView({ extraction, transcript, recordedAt, onAddMore, onSave, onDiscard, engine, photo }: ConfirmViewProps) {
   const reduce = useReducedMotion();
   const showToast = useToast((s) => s.show);
   const [items, setItems] = useState<Item[]>(() => extraction.events.map((ev, i) => ({ id: i, orig: i, ev, edited: false })));
@@ -94,6 +96,17 @@ export function ConfirmView({ extraction, transcript, recordedAt, onAddMore, onS
         <KText variant="title">Esto entendí</KText>
         <KText tone="muted">Revisa que esté bien. Toca «Editar» si algo no es así.</KText>
         {engine && <KText variant="caption" tone="muted">{engine === 'gemini' ? 'Entendido con IA (Google Gemini)' : 'Entendido en tu celular, sin IA'}</KText>}
+        {photo && (
+          <View style={{ flexDirection: 'row', gap: space[3], alignItems: 'flex-start', marginTop: space[2] }}>
+            <Image source={{ uri: photo.uri }} style={{ width: 88, height: 88, borderRadius: radius.md }} accessibilityIgnoresInvertColors accessible accessibilityLabel="Tu foto" />
+            {photo.caption && (
+              <View style={{ flex: 1, gap: 2 }}>
+                <KText variant="smallStrong">Gemini vio:</KText>
+                <KText variant="small">{photo.caption}</KText>
+              </View>
+            )}
+          </View>
+        )}
 
         {lowCount > 0 && (
           <Banner tone="warning" title="Revisa lo que marqué" message={lowCount === 1 ? 'Marqué con un punto lo que no tengo tan claro.' : `Marqué con un punto ${lowCount} cosas que no tengo tan claras.`} />
@@ -144,9 +157,11 @@ export function ConfirmView({ extraction, transcript, recordedAt, onAddMore, onS
           <Button variant="ghost" fullWidth label="Agregar algo que faltó" icon={(c) => <Plus size={20} color={c} />} onPress={() => setAdding(true)} />
         )}
 
-        <KText variant="caption" tone="muted" style={{ marginTop: space[2] }}>
-          Lo que dijiste: “{transcript}”
-        </KText>
+        {!photo && (
+          <KText variant="caption" tone="muted" style={{ marginTop: space[2] }}>
+            Lo que dijiste: “{transcript}”
+          </KText>
+        )}
       </ScrollView>
 
       <View style={{ paddingHorizontal: layout.gutter, paddingTop: space[2], gap: space[2] }}>
