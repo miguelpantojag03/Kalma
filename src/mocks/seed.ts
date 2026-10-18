@@ -32,6 +32,8 @@ export const SEED_RATES = {
 
 /** Días (hacia atrás desde hoy) sin ningún registro. */
 export const SKIPPED_DAYS_AGO = [12, 27, 33];
+/** Inicio de los dos periodos de la demo (hace 36 y 8 días: ciclo de 28). */
+export const PERIOD_STARTS_AGO = [36, 8];
 /** El experimento ocupó los días 21 → 8 atrás (14 días) y terminó hace una semana. */
 export const EXPERIMENT_DAYS_AGO = { start: 21, end: 8 };
 
@@ -285,6 +287,20 @@ export function generateSeed({ now = new Date(), seed = 20261017, days = 45 }: {
     }
   }
 
+  // Ciclo menstrual de Laura (activó "Registrar mi ciclo"): dos periodos de 5 días separados 28 días.
+  // Usa su propio generador para no mover el resto de la semilla (los patrones plantados no cambian).
+  const rc = mulberry32(seed + 28);
+  const FLOW = ['medium', 'heavy', 'medium', 'light', 'spotting'] as const;
+  for (const startAgo of PERIOD_STARTS_AGO) {
+    for (let d = 0; d < FLOW.length; d++) {
+      const ago = startAgo - d;
+      if (ago < 0 || SKIPPED_DAYS_AGO.includes(ago)) continue;
+      const time = at(subDays(today, ago), 8, int(rc, 0, 40));
+      const phrase = d === 0 ? 'me llegó el periodo' : 'sigo con el periodo';
+      push(time, 'seed', [phrase], [{ type: 'menstrual', occurred_at: iso(time), occurred_at_precision: 'part_of_day', confidence: 1, source_text: phrase, data: { flow: FLOW[d] } }], 'Periodo.');
+    }
+  }
+
   // Un par de correcciones hechas por Laura (para que "Editado por ti" aparezca en la demo).
   for (const e of entries.filter((x) => x.events.some((ev) => ev.type === 'symptom')).slice(2, 4)) {
     const ev = e.events.find((x) => x.type === 'symptom');
@@ -314,6 +330,7 @@ export function generateSeed({ now = new Date(), seed = 20261017, days = 45 }: {
       reminderTime: '21:00',
       caregiver: { enabled: false, personName: null },
       onboarded: true,
+      tracksCycle: true,
     },
     consent: { health: true, ai: true, location: false, updatedAt: { health: consentAt, ai: consentAt } },
     truth: {
@@ -336,6 +353,7 @@ export const EMPTY_PROFILE: Profile = {
   reminderTime: '21:00',
   caregiver: { enabled: false, personName: null },
   onboarded: false,
+  tracksCycle: false,
 };
 
 export const EMPTY_CONSENT: Consent = { health: false, ai: false, location: false, updatedAt: {} };

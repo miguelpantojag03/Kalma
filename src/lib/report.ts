@@ -37,6 +37,8 @@ export interface ReportData {
   timeline: { key: string; label: string; max: number | null | undefined }[];
   patterns: Pick<Pattern, 'level' | 'statement' | 'evidence'>[];
   medications: { name: string; times: number; full: number; partial: number; none: number; unknown: number }[];
+  /** Días del periodo con algún medicamento para el dolor (dato útil para el médico: uso frecuente). */
+  medicationDays: number;
   experiments: { title: string; status: string; summary: string }[];
   questions: string[];
   generatedAt: Date;
@@ -119,6 +121,7 @@ export function buildReport(opts: {
     // En el reporte (para el médico) en tercera persona: "de tus molestias" → "de las molestias"
     patterns: chosen.slice(0, MAX.patterns).map(({ level, statement, evidence }) => ({ level, statement: toThirdPerson(statement), evidence })),
     medications: [...meds.values()].sort((a, b) => b.times - a.times).slice(0, MAX.medications),
+    medicationDays: keys.filter((k) => (byDay.get(k) ?? []).some((e) => e.type === 'medication')).length,
     experiments,
     questions: opts.questions.filter((q) => q.trim()).slice(0, MAX.questions),
     generatedAt: now,
@@ -175,7 +178,7 @@ export function reportHtml(d: ReportData, sections: ReportSection[]): string {
     : '<p class="muted">Sin patrones con datos suficientes.</p>';
 
   const meds = d.medications.length
-    ? `<ul>${d.medications.map((m) => `<li><b>${esc(m.name)}</b>: ${m.times} ${m.times === 1 ? 'vez' : 'veces'} · ${RELIEF_TEXT(m)}</li>`).join('')}</ul>`
+    ? `<ul>${d.medications.map((m) => `<li><b>${esc(m.name)}</b>: ${m.times} ${m.times === 1 ? 'vez' : 'veces'} · ${RELIEF_TEXT(m)}</li>`).join('')}</ul><p class="muted">Días con medicamento en el periodo: ${d.medicationDays} de ${d.daysInRange}.</p>`
     : '<p class="muted">Sin medicamentos registrados.</p>';
 
   const exps = d.experiments.length

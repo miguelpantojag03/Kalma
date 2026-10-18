@@ -193,6 +193,7 @@ function ReportPreview({ data, sections }: { data: ReturnType<typeof buildReport
         <View style={{ gap: space[1] }}>
           <KText variant="smallStrong" tone="brand">MEDICAMENTOS DE RESCATE</KText>
           {data.medications.map((m) => <KText key={m.name} variant="small">{m.name}: {m.times} {m.times === 1 ? 'vez' : 'veces'}</KText>)}
+          <KText variant="caption" tone="muted">Días con medicamento: {data.medicationDays} de {data.daysInRange}</KText>
         </View>
       )}
       {has('experiments') && data.experiments.length > 0 && (

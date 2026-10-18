@@ -8,7 +8,7 @@ Autoevaluación con las 10 heurísticas de Nielsen, hecha por el equipo al cerra
 
 | # | Heurística | Cumplimiento | Problemas abiertos (máx. severidad) |
 |---|---|---|---|
-| 1 | Visibilidad del estado del sistema | Alto | 1 (sev. 2) |
+| 1 | Visibilidad del estado del sistema | Alto | 0 |
 | 2 | Relación con el mundo real | Alto | 0 |
 | 3 | Control y libertad | Alto | 0 |
 | 4 | Consistencia y estándares | Alto | 0 |
@@ -17,13 +17,13 @@ Autoevaluación con las 10 heurísticas de Nielsen, hecha por el equipo al cerra
 | 7 | Flexibilidad y eficiencia | Medio | 1 (sev. 2) |
 | 8 | Estética y diseño minimalista | Alto | 1 (sev. 1) |
 | 9 | Recuperarse de errores | Alto | 0 |
-| 10 | Ayuda y documentación | Medio | 1 (sev. 2) |
+| 10 | Ayuda y documentación | Alto | 0 |
 
 ## Detalle por heurística
 
 ### 1. Visibilidad del estado del sistema
 **Cómo se cumple:** el micrófono tiene cinco estados con texto ("Te escucho…", "Entendiendo…") además de la onda; el anillo de progreso dice cuántos días faltan para el primer análisis; los cambios pendientes de subir se cuentan en Perfil; el modo demo tiene una franja permanente; el banner "Sin conexión" aparece y desaparece solo; la tarjeta del experimento dice "Día 3 de 14".
-**Problema abierto (sev. 2):** con cuenta real, la sincronización ocurre en segundo plano sin un indicador de "guardado en la nube" por registro. *Propuesta:* un ícono discreto de nube en la tarjeta del día cuando el registro aún no sube.
+**Cerrado en la fase 11 (D77):** con cuenta y sin internet, Hoy muestra «N cambios por subir a tu cuenta · se envían solos con internet».
 
 ### 2. Relación entre el sistema y el mundo real
 **Cómo se cumple:** español colombiano y tuteo ("tinto", "almojábana", "Dolex"); horas en formato "6:41 a. m."; decimales con coma en el reporte; "Lo que mencionó tu médico" en lugar de "Diagnóstico"; intensidad de 0 a 10 como la preguntan los médicos.
@@ -53,7 +53,7 @@ Autoevaluación con las 10 heurísticas de Nielsen, hecha por el equipo al cerra
 
 ### 10. Ayuda y documentación
 **Cómo se cumple:** el onboarding explica en 4 pasos qué hace y qué no hace Kalma; cada patrón tiene "¿Qué significa esto?"; cada permiso explica para qué es antes de pedirlo.
-**Problema abierto (sev. 2):** no hay una sección de "Ayuda" o preguntas frecuentes en Perfil (por ejemplo, "¿por qué no veo patrones todavía?"). *Propuesta:* fila "Preguntas frecuentes" en Tu Kalma.
+**Cerrado en la fase 11 (D78):** Perfil › Ayuda y preguntas frecuentes, con 11 preguntas en acordeón.
 
 ## Problemas encontrados y corregidos durante la evaluación
 
