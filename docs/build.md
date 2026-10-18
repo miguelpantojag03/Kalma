@@ -54,6 +54,24 @@ Al terminar (≈ 10–15 min en la cola gratuita), EAS muestra un enlace y un QR
 
 ## 5. iOS
 
+### En Expo Go, sin el computador (EAS Update)
+
+La rama `main` (SDK 58) está publicada en el proyecto [@miguelpantojag/kalma](https://expo.dev/accounts/miguelpantojag/projects/kalma), canal `preview`. Desde el iPhone (con sesión iniciada en Expo Go con esa cuenta), se abre siempre con:
+
+```
+exp://u.expo.dev/c2d043d6-a8b8-4bcb-a9da-5cc1ed1611a7?channel-name=preview
+```
+
+Para publicar una versión nueva después de un cambio:
+
+```bash
+npx eas-cli@latest update --branch preview --environment preview --platform ios --message "qué cambió"
+```
+
+`runtimeVersion` es `exposdk:58.0.0` (el valor que pide Expo Go de la SDK 58; la rama `sdk-57` usa `exposdk:57.0.0`). Si el proyecto sube de SDK, ese valor cambia también. Las variables `EXPO_PUBLIC_…` del entorno `preview` de EAS son la URL y la llave *publishable* de Supabase, nunca la secreta.
+
+### Build instalable
+
 EAS puede generar un build de iOS, pero requiere una cuenta de Apple Developer (pago). Para el proyecto, iOS se muestra con Expo Go o en la versión web dentro del marco de celular.
 
 ## 6. Problemas comunes
