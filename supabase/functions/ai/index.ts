@@ -2,7 +2,7 @@
 //
 // - La llave de Gemini NUNCA está en la app: vive como secreto de Supabase (GEMINI_API_KEY).
 //   Se guarda con: npx supabase secrets set GEMINI_API_KEY=... --project-ref <ref>
-// - Recibe SOLO el texto dictado y la hora local (sin nombre ni otros datos de la persona).
+// - Recibe SOLO el texto dictado (o la foto que la persona eligió) y la hora local, sin nombre.
 // - No guarda ni registra el texto. La app valida la respuesta y, si algo falla, usa su analizador local.
 // - Las banderas rojas NO dependen de esta función: la app las detecta antes, sin internet.
 // - Abierta sin sesión (para la demo), con límites: texto ≤ 1.500 caracteres y 20 pedidos por minuto por IP.
@@ -13,6 +13,9 @@
 const MODEL = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.5-flash-lite';
 const API_KEY = Deno.env.get('GEMINI_API_KEY');
 const MAX_TEXT = 1500;
+/** Foto en base64 (≈ 4,5 MB de imagen): suficiente para una foto comprimida del celular. */
+const MAX_IMAGE = 6_000_000;
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -72,6 +75,15 @@ Reglas:
 - "summary": una frase corta en español con lo que entendiste. Si no hay eventos: "No encontré síntomas, comidas ni hábitos en lo que dijiste."
 - Nunca agregues interpretación médica ni causas.`;
 
+const PHOTO_PROMPT = `${ENTRY_PROMPT}
+
+Ahora no recibes texto sino una FOTO que la persona tomó para registrar: un plato de comida, una bebida o la caja o empaque de un medicamento.
+- Registra solo lo que se ve con claridad; si dudas, baja "confidence" (nunca más de 0.8: es una foto).
+- Comida o bebida: un evento por cada alimento reconocible, con sus categorías. "occurred_at" = AHORA con precision "approximate" y "meal" según la hora.
+- Medicamento: lee el nombre del empaque; dose solo si está impresa; taken_for y relief en null.
+- "source_text": "foto".
+- Si la foto no muestra comida, bebida ni medicamento: "events": [] y en "unparsed" una descripción corta de lo que se ve.`;
+
 const VISIT_PROMPT = `Eres el componente que ordena lo que una persona en Colombia cuenta al salir de su cita médica. NO interpretas, NO corriges al médico, NO agregas información: solo organizas lo que la persona dijo.
 
 Responde SOLO con un objeto JSON:
@@ -98,16 +110,22 @@ Deno.serve(async (req) => {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (limited(ip)) return json(429, { error: 'rate_limited' });
 
-  let body: { task?: string; text?: string; now?: string };
+  let body: { task?: string; text?: string; now?: string; image?: string; mimeType?: string };
   try {
     body = await req.json();
   } catch {
     return json(400, { error: 'bad_json' });
   }
-  const { task, text, now } = body;
-  if ((task !== 'entry' && task !== 'visit') || typeof text !== 'string' || !text.trim() || text.length > MAX_TEXT || typeof now !== 'string') {
-    return json(400, { error: 'bad_request' });
-  }
+  const { task, text, now, image, mimeType } = body;
+  const okText = typeof text === 'string' && !!text.trim() && text.length <= MAX_TEXT;
+  const okImage = typeof image === 'string' && image.length > 0 && image.length <= MAX_IMAGE && IMAGE_TYPES.includes(mimeType ?? '');
+  const valid = typeof now === 'string' && (task === 'entry' || task === 'visit' ? okText : task === 'photo' ? okImage : false);
+  if (!valid) return json(400, { error: 'bad_request' });
+
+  const prompt = task === 'entry' ? ENTRY_PROMPT : task === 'visit' ? VISIT_PROMPT : PHOTO_PROMPT;
+  const parts = task === 'photo'
+    ? [{ text: `AHORA (hora local de la persona): ${now}` }, { inlineData: { mimeType, data: image } }]
+    : [{ text: `AHORA (hora local de la persona): ${now}\n\nTexto:\n${text}` }];
 
   const generationConfig: Record<string, unknown> = { responseMimeType: 'application/json', temperature: 0.2 };
   // Es extracción, no razonamiento: con el mínimo de "pensamiento" responde varias veces más rápido
@@ -119,8 +137,8 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': API_KEY },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: task === 'entry' ? ENTRY_PROMPT : VISIT_PROMPT }] },
-        contents: [{ role: 'user', parts: [{ text: `AHORA (hora local de la persona): ${now}\n\nTexto:\n${text}` }] }],
+        systemInstruction: { parts: [{ text: prompt }] },
+        contents: [{ role: 'user', parts }],
         generationConfig: config,
       }),
     }).catch(() => null);

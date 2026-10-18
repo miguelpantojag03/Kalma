@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { setHours } from 'date-fns';
@@ -20,7 +20,7 @@ import { useKalma } from '@/lib/store';
 import { extractEntry } from '@/mocks/extractEntry';
 import { LISTENING_HINTS, SAMPLE_TRANSCRIPTS } from '@/mocks/transcripts';
 import { layout, space } from '@/theme';
-import { understandEntry, type Engine } from '@/lib/ai';
+import { understandEntry, understandPhoto, type Engine } from '@/lib/ai';
 import { ConfirmView } from './ConfirmView';
 import { SavedView } from './SavedView';
 
@@ -152,25 +152,42 @@ export function RecordScreen() {
     setPhase({ k: 'simulating', text });
   };
 
-  /* ---------- foto (simulada) ---------- */
+  /* ---------- foto (reconocida con Gemini) ---------- */
 
-  const takePhoto = async (from: 'camera' | 'library') => {
+  const takePhoto = async (from: 'camera' | 'library', afterSheet = true) => {
     setPhotoOpen(false);
+    // iOS no abre la cámara ni la galería mientras la hoja (un modal) todavía se está cerrando:
+    // fallaba sin avisar. Se espera a que termine de cerrarse.
+    if (afterSheet && Platform.OS === 'ios') await new Promise((r) => setTimeout(r, 600));
     if (from === 'camera') {
       const perm = await ImagePicker.getCameraPermissionsAsync();
       if (!perm.granted && perm.canAskAgain) return setPhase({ k: 'camera-permission' });
     }
-    const res = from === 'camera'
-      ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.5 })
-      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
-    if (res.canceled) return;
+    let res: ImagePicker.ImagePickerResult;
+    try {
+      const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.4, base64: true, exif: false };
+      res = from === 'camera' ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
+    } catch {
+      showToast({ message: from === 'camera' ? 'No pude abrir la cámara. Revisa el permiso en Ajustes.' : 'No pude abrir tus fotos. Revisa el permiso de Fotos en Ajustes.', tone: 'error' });
+      return;
+    }
+    if (res.canceled || !res.assets?.[0]) return;
+    const asset = res.assets[0];
     stamp();
-    // Reconocimiento de imagen simulado: propone un plato con confianza media para que la persona lo confirme.
-    setPhase({ k: 'processing', transcript: 'Foto de tu comida' });
-    const extraction = await extractEntry('Almorcé bandeja paisa', { recordedAt: recordedAt.current.toISOString() });
-    extraction.events = extraction.events.map((e) => ({ ...e, confidence: 0.55, source_text: 'foto' }));
-    extraction.summary = 'Plato reconocido en la foto.';
-    setPhase({ k: 'confirm', transcript: 'Foto de tu comida', source: 'photo', extraction });
+    const describeInstead = (message: string) => {
+      showToast({ message, tone: 'info' });
+      setTyped('');
+      setPhase({ k: 'text' });
+    };
+    if (!online || !asset.base64) return describeInstead('Sin conexión no puedo mirar la foto. Cuéntame qué es y lo anoto.');
+    setPhase({ k: 'processing', transcript: 'Foto' });
+    const { extraction, seen } = await understandPhoto(asset.base64, asset.mimeType ?? 'image/jpeg', recordedAt.current);
+    if (!extraction) {
+      // Nunca se inventa un plato: si no se reconoce, se pide describirlo
+      return describeInstead(seen ? `En la foto veo ${seen.charAt(0).toLowerCase()}${seen.slice(1).replace(/\.$/, '')}. Cuéntame qué comiste o tomaste.` : 'No pude reconocer la foto. Cuéntame qué es y lo anoto.');
+    }
+    setEngine('gemini');
+    setPhase({ k: 'confirm', transcript: 'Foto', source: 'photo', extraction });
   };
 
   /* ---------- guardar ---------- */
@@ -303,7 +320,7 @@ export function RecordScreen() {
             onAllow={async () => {
               const r = await ImagePicker.requestCameraPermissionsAsync();
               setPhase({ k: 'start' });
-              if (r.granted) void takePhoto('camera');
+              if (r.granted) void takePhoto('camera', false);
             }}
             onAlternative={() => setPhase({ k: 'text' })}
           />

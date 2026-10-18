@@ -1,4 +1,4 @@
-import { localIso, organizeVisitAI, understandEntry, validEvents } from '@/lib/ai';
+import { localIso, organizeVisitAI, understandEntry, understandPhoto, validEvents } from '@/lib/ai';
 
 const mockInvoke = jest.fn();
 jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: (...args: unknown[]) => mockInvoke(...args) } } }));
@@ -81,5 +81,28 @@ describe('IA real con salvaguardas (Gemini vía Edge Function)', () => {
 
     ok({ diagnoses: 'no es una lista' });
     expect((await organizeVisitAI('me dijo que es migraña y que tome sumatriptán', NOW)).engine).toBe('local');
+  });
+});
+
+describe('fotos reconocidas con Gemini', () => {
+  const plate = { type: 'food', occurred_at: `2026-10-18T13:00:00${offset}`, occurred_at_precision: 'approximate', confidence: 0.95, source_text: 'x', data: { name: 'Bandeja paisa', canonical_name: 'bandeja paisa', categories: ['frito'], meal: 'lunch' } };
+
+  it('envía la foto y devuelve los alimentos con confianza máxima de 0,8 y origen «foto»', async () => {
+    ok({ summary: 'x', events: [plate], unparsed: null });
+    const r = await understandPhoto('aGVsbG8=', 'image/jpeg', NOW);
+    expect(mockInvoke).toHaveBeenCalledWith('ai', { body: { task: 'photo', image: 'aGVsbG8=', mimeType: 'image/jpeg', now: localIso(NOW) } });
+    expect(r.extraction!.events[0]).toMatchObject({ confidence: 0.8, source_text: 'foto' });
+  });
+
+  it('si la foto no muestra comida, no inventa nada y dice qué vio', async () => {
+    ok({ summary: 'x', events: [], unparsed: 'Una captura de pantalla.' });
+    expect(await understandPhoto('aGVsbG8=', 'image/png', NOW)).toEqual({ extraction: null, seen: 'Una captura de pantalla.' });
+  });
+
+  it('no envía fotos demasiado grandes y tolera fallas de la IA', async () => {
+    expect(await understandPhoto('a'.repeat(6_000_001), 'image/jpeg', NOW)).toEqual({ extraction: null, seen: null });
+    expect(mockInvoke).not.toHaveBeenCalled();
+    mockInvoke.mockResolvedValueOnce({ data: null, error: new Error('quota') });
+    expect(await understandPhoto('aGVsbG8=', 'image/jpeg', NOW)).toEqual({ extraction: null, seen: null });
   });
 });
