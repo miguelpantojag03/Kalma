@@ -64,6 +64,7 @@ export function RecordScreen() {
   );
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [engine, setEngine] = useState<Engine | undefined>(undefined);
+  const [photo, setPhoto] = useState<{ uri: string; caption: string | null } | undefined>(undefined);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [typed, setTyped] = useState('');
   // Momento del registro: ref para los cálculos en callbacks, estado para mostrarlo.
@@ -181,12 +182,13 @@ export function RecordScreen() {
     };
     if (!online || !asset.base64) return describeInstead('Sin conexión no puedo mirar la foto. Cuéntame qué es y lo anoto.');
     setPhase({ k: 'processing', transcript: 'Foto' });
-    const { extraction, seen } = await understandPhoto(asset.base64, asset.mimeType ?? 'image/jpeg', recordedAt.current);
+    const { extraction, seen, caption } = await understandPhoto(asset.base64, asset.mimeType ?? 'image/jpeg', recordedAt.current);
     if (!extraction) {
       // Nunca se inventa un plato: si no se reconoce, se pide describirlo
       return describeInstead(seen ? `En la foto veo ${seen.charAt(0).toLowerCase()}${seen.slice(1).replace(/\.$/, '')}. Cuéntame qué comiste o tomaste.` : 'No pude reconocer la foto. Cuéntame qué es y lo anoto.');
     }
     setEngine('gemini');
+    setPhoto({ uri: asset.uri, caption: caption ?? null });
     setPhase({ k: 'confirm', transcript: 'Foto', source: 'photo', extraction });
   };
 
@@ -243,6 +245,7 @@ export function RecordScreen() {
             transcript={phase.transcript}
             recordedAt={recordedAtShown}
             engine={engine}
+            photo={phase.source === 'photo' ? photo : undefined}
             onAddMore={(extra) => void process(`${phase.transcript}, ${extra}`, phase.source)}
             onSave={(events) => save(events, phase)}
             onDiscard={close}

@@ -119,11 +119,14 @@ const MAX_IMAGE_B64 = 6_000_000;
  * falla o la foto no muestra nada registrable: en ese caso la app pide describirla por texto
  * (nunca inventa un plato). `seen` es lo que la IA dice que hay en la foto cuando no es comida.
  */
-export async function understandPhoto(base64: string, mimeType: string, takenAt: Date): Promise<{ extraction: Extraction | null; seen: string | null }> {
+export async function understandPhoto(base64: string, mimeType: string, takenAt: Date): Promise<{ extraction: Extraction | null; seen: string | null; caption?: string | null }> {
   if (!base64 || base64.length > MAX_IMAGE_B64) return { extraction: null, seen: null };
   const result = await callAi({ task: 'photo', image: base64, mimeType }, takenAt, 20000);
   if (!result) return { extraction: null, seen: null };
-  const events = validEvents(result, takenAt).map((e) => ({ ...e, confidence: Math.min(e.confidence, 0.8), source_text: 'foto' }));
+  // Lo que Gemini describe que hay en la foto (se muestra en la confirmación: «Gemini vio: …»)
+  const summary = (result as { summary?: unknown }).summary;
+  const caption = typeof summary === 'string' && summary.trim() ? summary.trim() : null;
+  const events = validEvents(result, takenAt).map((e) => ({ ...e, confidence: Math.min(e.confidence, 0.8), source_text: 'Reconocido en tu foto' }));
   const unparsed = (result as { unparsed?: unknown }).unparsed;
   const seen = typeof unparsed === 'string' && unparsed.trim() ? unparsed.trim() : null;
   if (events.length === 0) return { extraction: null, seen };
@@ -134,5 +137,5 @@ export async function understandPhoto(base64: string, mimeType: string, takenAt:
     follow_up: buildFollowUp(events, false),
     unparsed: null,
   });
-  return { extraction, seen };
+  return { extraction, seen, caption };
 }
