@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { biometricAvailability, unlock, useDeviceSettings, type BiometricAvailability } from '@/lib/deviceSettings';
 import { shortDate } from '@/lib/dates';
 import { shareExport } from '@/lib/exportData';
+import { cancelAllReminders, scheduleDailyCheckin } from '@/lib/notifications';
 import { useKalma } from '@/lib/store';
 import { space, useTheme } from '@/theme';
 
@@ -23,7 +24,7 @@ export function PrivacyScreen() {
   const { c } = useTheme();
   const { status, user } = useAuth();
   const { consent, setConsent, profile, entries, experiments, wipeAll, resetDemo } = useKalma();
-  const { biometricLock, setBiometricLock } = useDeviceSettings();
+  const { biometricLock, setBiometricLock, checkinReminder } = useDeviceSettings();
   const showToast = useToast((s) => s.show);
   const [bio, setBio] = useState<BiometricAvailability>('unsupported');
   const [revoking, setRevoking] = useState<ConsentKey | null>(null);
@@ -136,6 +137,8 @@ export function PrivacyScreen() {
                     wipeAll();
                     useKalma.setState({ profile: p, consent: cs });
                   }
+                  // Los recordatorios de experimentos y controles borrados dejan de llegar; el check-in sigue
+                  void cancelAllReminders().then(() => checkinReminder && scheduleDailyCheckin(profile.reminderTime, profile.name || undefined));
                   setWipe(false);
                   setConfirmText('');
                   showToast({ message: status === 'demo' ? 'Listo, la demo volvió a empezar' : 'Listo, borré tus registros', tone: 'info' });

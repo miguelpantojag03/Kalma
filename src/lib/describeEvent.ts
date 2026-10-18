@@ -18,12 +18,16 @@ export interface EventDescription {
 
 export function describeEvent(e: StoredEvent): EventDescription {
   switch (e.type) {
-    case 'symptom':
+    case 'symptom': {
+      // "Dolor de cabeza · cabeza" repite: la zona solo se muestra si el nombre no la dice ya
+      const where = e.data.side ? SIDE[e.data.side] : e.data.body_location;
+      const redundant = !!where && !e.data.side && e.data.name.toLowerCase().includes(where.toLowerCase());
       return {
         title: cap(e.data.name),
-        detail: [e.data.side ? SIDE[e.data.side] : e.data.body_location, e.data.character].filter(Boolean).join(' · ') || undefined,
+        detail: [redundant ? null : where, e.data.character].filter(Boolean).join(' · ') || undefined,
         intensity: e.data.intensity_0_10 ?? undefined,
       };
+    }
     case 'food':
     case 'drink':
       return {

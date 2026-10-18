@@ -13,6 +13,7 @@ import * as Linking from 'expo-linking';
 import { router, useSegments } from 'expo-router';
 import type { User } from '@supabase/supabase-js';
 import { friendlyAuthError, type FriendlyAuthError } from '../authErrors';
+import { cancelAllReminders } from '../notifications';
 import { closeWorkspace, openWorkspace, useKalma } from '../store';
 import { supabase, supabaseConfigured } from '../supabase';
 import { flush, stopSync, syncOnSignIn } from '../sync/engine';
@@ -85,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const leaveUser = useCallback(async () => {
     stopSync();
     currentUserId.current = null;
+    await cancelAllReminders();
     await closeWorkspace({ wipe: true }); // cerrar sesión borra la caché local de esa cuenta
     setUser(null);
     setRecovering(false);
@@ -271,6 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     exitDemo: async () => {
       await AsyncStorage.removeItem(MODE_KEY);
+      await cancelAllReminders();
       await openWorkspace('none'); // los datos de la demo se conservan para la próxima vez
       setStatus('signedOut');
     },

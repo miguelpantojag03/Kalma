@@ -14,7 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import * as Crypto from 'expo-crypto';
 import aesjs from 'aes-js';
-import { createClient, processLock, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -64,7 +64,7 @@ export const supabase: SupabaseClient | null = supabaseConfigured
         // Los enlaces de correo los procesa AuthProvider (deep link kalma://), no la URL de la página.
         detectSessionInUrl: false,
         flowType: 'pkce',
-        lock: processLock,
+        // Sin `lock`: desde supabase-js 2.118 la sesión se coordina sola (la opción está obsoleta).
       },
     })
   : null;

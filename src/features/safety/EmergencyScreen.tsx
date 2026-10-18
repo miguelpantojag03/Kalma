@@ -54,7 +54,7 @@ function Physical() {
     <View style={{ gap: space[4], paddingTop: space[7] }}>
       <KText variant="title">Esto puede necesitar atención médica urgente</KText>
       <KText>Busca atención de inmediato o llama a la línea de emergencias {EMERGENCY_NUMBER}.</KText>
-      <KText tone="muted">Si no estás sola o solo, pide a alguien que te acompañe.</KText>
+      <KText tone="muted">Si hay alguien cerca, pídele que te acompañe.</KText>
     </View>
   );
 }
