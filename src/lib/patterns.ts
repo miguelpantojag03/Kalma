@@ -214,27 +214,32 @@ function levelOf(rr: number, p: number, q: number, supporting: number, episodes:
 
 function windowSentence(f: Factor, w: WindowId) {
   if (f.sentence) return f.sentence(w);
-  switch (w) {
-    case '0-6h': return `en las 6 horas después de ${f.phrase}`;
-    case '6-24h': return `entre 6 y 24 horas después de ${f.phrase}`;
-    case '24-48h': return `uno o dos días después de ${f.phrase}`;
-    case 'prev-day': return `al día siguiente de ${f.phrase}`;
-  }
+  const s = {
+    '0-6h': `en las 6 horas después de ${f.phrase}`,
+    '6-24h': `entre 6 y 24 horas después de ${f.phrase}`,
+    '24-48h': `uno o dos días después de ${f.phrase}`,
+    'prev-day': `al día siguiente de ${f.phrase}`,
+  }[w];
+  return s.replace(/de el/g, 'del'); // "después de el periodo" → "después del periodo"
 }
 
-/** Analiza los registros. Puro y determinístico: mismos datos → mismos patrones. */
-export function analyzePatterns(entries: Entry[], now = new Date()): PatternAnalysis {
-  const today = dayKey(now);
-  const days = [...recordedDays(entries)].filter((k) => k !== today).sort();
-  const events = allEvents(entries).filter((e) => e.occurred_at);
-  const base: PatternAnalysis = { ready: false, days: days.length, patterns: [], tested: 0, explained: [] };
-  if (days.length < DAYS_FOR_ANALYSIS) return base;
+type Candidate = Omit<Pattern, 'q' | 'level' | 'id'> & { units: DayUnit[]; factor: Factor };
 
+/** Días completos registrados (sin contar hoy, que todavía no termina). */
+const analysisDays = (entries: Entry[], now: Date) => {
+  const today = dayKey(now);
+  return [...recordedDays(entries)].filter((k) => k !== today).sort();
+};
+
+/**
+ * Tablas 2×2 (con/sin factor × con/sin síntoma) para cada síntoma, factor y ventana. La usan los
+ * patrones (14 días) y las pistas tempranas (5 días): mismo cálculo, distintos umbrales.
+ */
+function buildCandidates(entries: Entry[], days: string[], opts: { minEpisodes: number; minExposed: number; minAbsent: number }): Candidate[] {
+  const events = allEvents(entries).filter((e) => e.occurred_at);
   const daySet = new Set(days);
   const symptoms = events.filter((e): e is Extract<StoredEvent, { type: 'symptom' }> => e.type === 'symptom');
   const outcomes = [...new Set(symptoms.map((s) => s.data.name))];
-
-  type Candidate = Omit<Pattern, 'q' | 'level' | 'id'> & { units: DayUnit[]; factor: Factor };
   const candidates: Candidate[] = [];
 
   for (const outcome of outcomes) {
@@ -248,7 +253,7 @@ export function analyzePatterns(entries: Entry[], now = new Date()): PatternAnal
       if (!prev || t < prev) firstByDay.set(k, t);
     }
     const episodes = firstByDay.size;
-    if (episodes < MIN_EPISODES) continue;
+    if (episodes < opts.minEpisodes) continue;
 
     // hora típica (mediana) de los episodios: referencia para los días sin episodio
     const minutes = [...firstByDay.values()].map((d) => d.getHours() * 60 + d.getMinutes()).sort((x, y) => x - y);
@@ -276,7 +281,7 @@ export function analyzePatterns(entries: Entry[], now = new Date()): PatternAnal
           else if (u.outcome) c++;
           else d++;
         }
-        if (a + b < MIN_EXPOSED || c + d < MIN_EXPOSED) continue; // presente y ausente ≥ 3
+        if (a + b < opts.minExposed || c + d < opts.minAbsent) continue; // el factor debe estar presente y ausente
         const rr = relativeRisk(a, b, c, d);
         const p = fisherGreater(a, b, c, d);
         const rateWith = a / (a + b);
@@ -290,6 +295,19 @@ export function analyzePatterns(entries: Entry[], now = new Date()): PatternAnal
       }
     }
   }
+  return candidates;
+}
+
+/** Analiza los registros. Puro y determinístico: mismos datos → mismos patrones. */
+export function analyzePatterns(entries: Entry[], now = new Date()): PatternAnalysis {
+  const days = analysisDays(entries, now);
+  // El conteo que ve la persona incluye hoy si ya registró algo (igual que en Hoy); los cálculos usan
+  // solo días completos, porque el de hoy todavía no termina.
+  const counted = recordedDays(entries).size;
+  const base: PatternAnalysis = { ready: false, days: counted, patterns: [], tested: 0, explained: [] };
+  if (counted < DAYS_FOR_ANALYSIS) return base;
+  const candidates = buildCandidates(entries, days, { minEpisodes: MIN_EPISODES, minExposed: MIN_EXPOSED, minAbsent: MIN_EXPOSED });
+  const events = allEvents(entries).filter((e) => e.occurred_at);
 
   // Corrección por comparaciones múltiples sobre TODO lo probado
   const qs = benjaminiHochberg(candidates.map((x) => x.p));
@@ -350,10 +368,74 @@ export function analyzePatterns(entries: Entry[], now = new Date()): PatternAnal
     };
   });
 
-  return { ready: true, days: days.length, patterns, tested: candidates.length, explained };
+  return { ready: true, days: counted, patterns, tested: candidates.length, explained };
 }
 
 /* ---------- experimentos: antes vs. durante ---------- */
+
+/* ---------- pistas tempranas (5 a 13 días) ---------- */
+
+/** Días registrados para mostrar las primeras pistas (los patrones esperan a DAYS_FOR_ANALYSIS = 14). */
+export const EARLY_DAYS = 5;
+
+export interface EarlyHint {
+  id: string;
+  outcome: string;
+  factorId: string;
+  /** "3 de tus 4 dolores de cabeza llegaron después de noches de menos de 6 horas." */
+  statement: string;
+  /** "Los días sin eso, pasó en 1 de 4." */
+  contrast: string;
+}
+
+/**
+ * Pistas tempranas (D83): con 5 a 13 días todavía no hay datos para un patrón, pero la persona no
+ * debería esperar dos semanas sin nada. Se muestran SOLO coincidencias muy marcadas y siempre como
+ * «Pista temprana: con pocos días puede ser casualidad». Reglas (más exigentes en forma que en
+ * estadística, porque con tan pocos días la estadística no alcanza):
+ * - el síntoma apareció al menos 3 días, y al menos 3 veces después del factor;
+ * - ≥ 60 % de los episodios llegaron después del factor;
+ * - el factor NO estuvo todos los días (al menos 2 días sin él): si comes arepa a diario, no es pista;
+ * - con el factor el síntoma es al menos 30 puntos más frecuente que sin él.
+ * A los 14 días desaparecen: las que eran reales salen como patrón; las casuales, no.
+ */
+export function earlyHints(entries: Entry[], now = new Date(), max = 3): EarlyHint[] {
+  const days = analysisDays(entries, now);
+  const counted = recordedDays(entries).size; // mismo conteo que Hoy y Patrones
+  if (counted < EARLY_DAYS || counted >= DAYS_FOR_ANALYSIS) return [];
+  const candidates = buildCandidates(entries, days, { minEpisodes: 3, minExposed: 3, minAbsent: 2 })
+    .filter((x) => x.table.a >= 3 && x.shareOfEpisodes >= 0.6 && x.rateWith - x.rateWithout >= 0.3);
+
+  // Una pista por síntoma + factor (la ventana con más diferencia), las más marcadas primero
+  const best = new Map<string, Candidate>();
+  for (const x of candidates) {
+    const k = `${x.outcome}|${x.factorId}`;
+    const cur = best.get(k);
+    if (!cur || x.rateWith - x.rateWithout > cur.rateWith - cur.rateWithout) best.set(k, x);
+  }
+  const ranked = [...best.values()].sort((x, y) => y.table.a - x.table.a || (y.rateWith - y.rateWithout) - (x.rateWith - x.rateWithout) || x.p - y.p);
+  // Sin control estadístico de confusión (no hay datos para eso), al menos no se repite la misma
+  // historia: si los días de una pista ya los explica otra más marcada (almojábana = lácteo + harina),
+  // se descarta.
+  const accepted: Candidate[] = [];
+  for (const x of ranked) {
+    const covered = new Set(accepted.filter((y) => y.outcome === x.outcome).flatMap((y) => y.supportingDays));
+    if (x.supportingDays.every((d) => covered.has(d))) continue;
+    accepted.push(x);
+  }
+  return accepted
+    .slice(0, max)
+    .map((x) => {
+      const { a, c, d } = x.table;
+      return {
+        id: `pista|${x.outcome}|${x.factorId}|${x.window}`,
+        outcome: x.outcome,
+        factorId: x.factorId,
+        statement: `${a} de tus ${x.episodes} ${outcomePlural(x.outcome)} llegaron ${windowSentence(x.factor, x.window)}.`,
+        contrast: `Los días sin eso, pasó en ${c} de ${c + d}.`,
+      };
+    });
+}
 
 export interface ExperimentResult {
   outcome: string;

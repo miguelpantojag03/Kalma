@@ -8,6 +8,7 @@ import { Banner, Button, Card, EmptyState, KText, MicButton, ProgressRing } from
 import { Screen } from '@/components/Screen';
 import { dayKey } from '@/lib/dates';
 import { weekComparison, weekSummary } from '@/lib/insights';
+import { EARLY_DAYS, earlyHints } from '@/lib/patterns';
 import { analysisProgress, daysThisWeek, eventsByDay } from '@/lib/selectors';
 import { useKalma } from '@/lib/store';
 import { space, useTheme } from '@/theme';
@@ -41,6 +42,7 @@ export function TodayScreen() {
   const progress = useMemo(() => analysisProgress(entries), [entries]);
   const week = useMemo(() => daysThisWeek(entries, now), [entries, now]);
   const weekText = useMemo(() => weekComparison(weekSummary(entries, now)), [entries, now]);
+  const hintCount = useMemo(() => earlyHints(entries, now).length, [entries, now]);
   const checkinDone = useMemo(() => entries.some((e) => e.source === 'checkin' && dayKey(e.recordedAt) === today), [entries, today]);
   const showCheckin = now.getHours() >= 19 && !checkinDone;
 
@@ -125,7 +127,13 @@ export function TodayScreen() {
           ) : (
             <>
               <KText variant="subheading">{progress.days} de {progress.needed} días</KText>
-              <KText variant="small" tone="muted">Todavía no tengo suficientes datos; vas muy bien.</KText>
+              <KText variant="small" tone="muted">
+                {progress.days < EARLY_DAYS
+                  ? `En ${EARLY_DAYS - progress.days} ${EARLY_DAYS - progress.days === 1 ? 'día' : 'días'} te muestro las primeras pistas.`
+                  : hintCount > 0
+                    ? `Ya hay ${hintCount === 1 ? 'una pista temprana' : 'pistas tempranas'} en Patrones.`
+                    : 'Sigo buscando pistas; a los 14 días, patrones confirmados.'}
+              </KText>
             </>
           )}
         </View>

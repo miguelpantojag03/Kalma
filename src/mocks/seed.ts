@@ -294,7 +294,8 @@ export function generateSeed({ now = new Date(), seed = 20261017, days = 45 }: {
   for (const startAgo of PERIOD_STARTS_AGO) {
     for (let d = 0; d < FLOW.length; d++) {
       const ago = startAgo - d;
-      if (ago < 0 || SKIPPED_DAYS_AGO.includes(ago)) continue;
+      // Solo dentro del rango pedido (una semilla corta no debe traer días de periodo de antes)
+      if (ago < 0 || ago > days - 1 || SKIPPED_DAYS_AGO.includes(ago)) continue;
       const time = at(subDays(today, ago), 8, int(rc, 0, 40));
       const phrase = d === 0 ? 'me llegó el periodo' : 'sigo con el periodo';
       push(time, 'seed', [phrase], [{ type: 'menstrual', occurred_at: iso(time), occurred_at_precision: 'part_of_day', confidence: 1, source_text: phrase, data: { flow: FLOW[d] } }], 'Periodo.');

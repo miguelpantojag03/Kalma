@@ -15,6 +15,7 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - Fase 10 · Pulido y accesibilidad: D67–D70
 - Fase 11 · Bienestar (mensaje del día, ciclo, comidas, consejos, modo crisis, ayuda): D71–D80
 - Fase 12 · IA real con Google Gemini: D81–D82
+- Pistas tempranas: D83
 
 ---
 
@@ -563,3 +564,10 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - **Error corregido:** en iPhone la galería y la cámara no abrían. La app las abría mientras la hoja «Registrar con una foto» (un modal) aún se cerraba, e iOS lo rechazaba sin avisar. Ahora espera a que la hoja termine de cerrarse y, si el sistema no deja abrirlas, muestra «Revisa el permiso de Fotos en Ajustes».
 - **Alternativa descartada:** mantener la simulación (es engañosa en una app de salud) o guardar la foto (no hace falta para encontrar patrones y es un dato más que proteger). Kalma no guarda la foto: solo la envía a Gemini para reconocerla, con las mismas condiciones del plan gratuito que el texto, y así lo dice el consentimiento.
 - **Cómo se validará:** prueba con una foto real de bandeja paisa (reconocida en 4,4 s como almuerzo) y con una captura de pantalla (sin registros, con descripción); 3 pruebas automáticas; tarea T3b de la prueba de usabilidad.
+
+### D83. Pistas tempranas a los 5 días; patrones confirmados a los 14
+- **Necesidad del usuario:** quien se siente mal quiere una respuesta pronto. Dos semanas sin nada a cambio es mucho y puede hacer que abandone la app.
+- **Principio:** equilibrio entre la necesidad de una respuesta rápida y la honestidad estadística. Con 5 días, Patrones muestra hasta 3 **pistas tempranas**: solo coincidencias muy marcadas. El síntoma tiene que aparecer al menos 3 veces después del factor; el 60 % o más de los episodios tienen que llegar después de él; el factor no puede estar todos los días (al menos 2 días sin él: comer arepa a diario no es pista); y con el factor el síntoma tiene que ser al menos 30 puntos más frecuente. Si dos pistas se explican con los mismos días (almojábana = lácteo + harina), se muestra una sola. Se presentan con borde punteado (como lo incompleto en el calendario), la etiqueta «Pista temprana» y el aviso «Con pocos días pueden ser casualidad. No dejes de comer algo ni cambies nada importante solo por una pista». A los 14 días desaparecen: las reales salen como patrón y las casuales no. En todas las etapas se recuerda: «Si te sientes muy mal, no esperes a Kalma: habla con tu médico; si es una emergencia, llama al 123».
+- **Conteo coherente:** Hoy y Patrones cuentan igual (días con registros, incluido hoy si ya anotaste algo). Los cálculos usan solo días completos.
+- **Alternativa descartada:** bajar los patrones a 3 o 7 días. Con 3 días, cualquier cosa parece patrón (si comes arepa los 3 días y te duele la cabeza los 3, diría «100 % después de arepa»), y la persona podría dejar alimentos sin razón.
+- **Cómo se validará:** 6 pruebas automáticas (la coincidencia plantada aparece a la semana con 4 semillas distintas; un factor diario no es pista; sin repetidas; desaparecen a los 14 días). En la prueba de usabilidad: «¿Qué harías con esta pista?» (meta: nadie dice que dejaría un alimento solo por eso).
