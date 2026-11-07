@@ -12,6 +12,7 @@ import { EARLY_DAYS, earlyHints } from '@/lib/patterns';
 import { analysisProgress, daysThisWeek, eventsByDay } from '@/lib/selectors';
 import { useKalma } from '@/lib/store';
 import { space, useTheme } from '@/theme';
+import { ReliefTodayCard } from '@/features/relief/ReliefTodayCard';
 import { DayTimeline } from './DayTimeline';
 import { NewPatternCard } from './NewPatternCard';
 import { QuickSymptomSheet } from './QuickSymptomSheet';
@@ -84,6 +85,9 @@ export function TodayScreen() {
       <Button variant="secondary" fullWidth label="Me empezó un síntoma" icon={(col) => <Plus size={20} color={col} />} onPress={() => setQuickOpen(true)} />
       {/* Para una migraña en curso: pantalla oscura, sin animaciones (D73) */}
       <Button variant="ghost" fullWidth label="Modo crisis: pantalla oscura" icon={(col) => <Moon size={20} color={col} />} onPress={() => router.push('/crisis' as Href)} />
+
+      {/* Si anotó un síntoma hace poco: ideas para sentirse mejor mientras tanto (D90) */}
+      <ReliefTodayCard now={now} />
 
       {/* Después de registrar (lo principal): el mensaje del día y el ciclo */}
       <DailyMessageCard now={now} />

@@ -196,6 +196,16 @@ function ReportPreview({ data, sections }: { data: ReturnType<typeof buildReport
           <KText variant="caption" tone="muted">Días con medicamento: {data.medicationDays} de {data.daysInRange}</KText>
         </View>
       )}
+      {has('medications') && data.selfCare.length > 0 && (
+        <View style={{ gap: space[1] }}>
+          <KText variant="smallStrong" tone="brand">MEDIDAS SIN MEDICAMENTO QUE PROBÓ</KText>
+          {data.selfCare.map((m) => (
+            <KText key={m.title} variant="small">
+              {m.title}: {m.times} {m.times === 1 ? 'vez' : 'veces'}{m.yes + m.some > 0 ? ` · le ayudó ${m.yes + m.some}` : ''}
+            </KText>
+          ))}
+        </View>
+      )}
       {has('experiments') && data.experiments.length > 0 && (
         <View style={{ gap: space[1] }}>
           <KText variant="smallStrong" tone="brand">EXPERIMENTOS</KText>

@@ -67,6 +67,8 @@ export interface KalmaState extends KalmaData {
   addEntry: (input: { transcript: string; summary: string; source: Entry['source']; events: ExtractedEvent[]; recordedAt?: string }) => Entry;
   updateEvent: (eventId: string, patch: Partial<Pick<StoredEvent, 'occurred_at' | 'occurred_at_precision'>> & { data?: Record<string, unknown> }) => void;
   removeEvent: (eventId: string) => void;
+  /** Marca una idea de alivio como probada en un síntoma (helped null = aún no sabe si ayudó). No cuenta como edición. */
+  logRelief: (eventId: string, ideaId: string, helped: 'yes' | 'some' | 'no' | null) => void;
   undoRemove: () => void;
   removeEntry: (entryId: string) => void;
 
@@ -133,6 +135,14 @@ export const useKalma = create<KalmaState>()(
         return entry;
       },
 
+      logRelief: (eventId, ideaId, helped) =>
+        set((s) => ({
+          entries: mapEvents(s.entries, (e) => {
+            if (e.id !== eventId || e.type !== 'symptom') return e;
+            const prev = ((e.data as { relief?: { id: string; helped: 'yes' | 'some' | 'no' | null; at: string }[] }).relief ?? []).filter((r) => r.id !== ideaId);
+            return { ...e, data: { ...e.data, relief: [...prev, { id: ideaId, helped, at: new Date().toISOString() }] } } as StoredEvent;
+          }),
+        })),
       updateEvent: (eventId, patch) =>
         set((s) => ({
           entries: mapEvents(s.entries, (e) =>

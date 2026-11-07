@@ -26,6 +26,8 @@ export const SymptomData = z.object({
   intensity_inferred: z.boolean().default(false),
   character: z.string().nullable().optional(),
   duration_minutes: z.number().int().nonnegative().nullable().optional(),
+  /** Ideas de alivio que la persona probó y si le ayudaron (D90). Van al reporte para el médico. */
+  relief: z.array(z.object({ id: z.string(), helped: z.enum(['yes', 'some', 'no']).nullable(), at: z.string() })).optional(),
 });
 
 export const FoodDrinkData = z.object({

@@ -12,6 +12,7 @@ import type { Entry, Experiment, Profile, StoredEvent } from './schema';
 import { allEvents, dayStatus, eventsByDay, recordedDays } from './selectors';
 import { light } from '@/theme/tokens';
 import { PATTERN_LEVEL_LABEL } from './types';
+import { ideaById, reliefTries } from './relief';
 
 export type ReportSection = 'summary' | 'timeline' | 'patterns' | 'medications' | 'experiments' | 'questions';
 
@@ -24,7 +25,7 @@ export const SECTION_LABEL: Record<ReportSection, string> = {
   questions: 'Preguntas para mi médico',
 };
 
-export const MAX = { patterns: 3, medications: 3, questions: 4, symptoms: 4 } as const;
+export const MAX = { patterns: 3, medications: 3, questions: 4, symptoms: 4, selfCare: 3 } as const;
 
 export interface ReportData {
   patient: string;
@@ -39,6 +40,8 @@ export interface ReportData {
   medications: { name: string; times: number; full: number; partial: number; none: number; unknown: number }[];
   /** Días del periodo con algún medicamento para el dolor (dato útil para el médico: uso frecuente). */
   medicationDays: number;
+  /** Medidas sin medicamento que probó desde "Mientras tanto" y si le ayudaron (D90). */
+  selfCare: { title: string; times: number; yes: number; some: number; no: number; unknown: number }[];
   experiments: { title: string; status: string; summary: string }[];
   questions: string[];
   generatedAt: Date;
@@ -92,6 +95,19 @@ export function buildReport(opts: {
     meds.set(e.data.name, m);
   }
 
+  // Medidas sin medicamento que probó (guardadas en cada síntoma)
+  const care = new Map<string, ReportData['selfCare'][number]>();
+  for (const e of events) {
+    for (const t of reliefTries(e)) {
+      const idea = ideaById(t.id);
+      if (!idea) continue;
+      const m = care.get(t.id) ?? { title: idea.title, times: 0, yes: 0, some: 0, no: 0, unknown: 0 };
+      m.times++;
+      m[t.helped ?? 'unknown']++;
+      care.set(t.id, m);
+    }
+  }
+
   // Patrones: los que la persona eligió; si no eligió, los Fuertes y Probables
   const chosen = opts.selectedPatternIds.length
     ? opts.patterns.filter((p) => opts.selectedPatternIds.includes(p.id))
@@ -122,6 +138,7 @@ export function buildReport(opts: {
     patterns: chosen.slice(0, MAX.patterns).map(({ level, statement, evidence }) => ({ level, statement: toThirdPerson(statement), evidence })),
     medications: [...meds.values()].sort((a, b) => b.times - a.times).slice(0, MAX.medications),
     medicationDays: keys.filter((k) => (byDay.get(k) ?? []).some((e) => e.type === 'medication')).length,
+    selfCare: [...care.values()].sort((a, b) => b.times - a.times).slice(0, MAX.selfCare),
     experiments,
     questions: opts.questions.filter((q) => q.trim()).slice(0, MAX.questions),
     generatedAt: now,
@@ -144,6 +161,8 @@ export function suggestedQuestions(patterns: Pattern[], data: Pick<ReportData, '
 /* ---------- HTML ---------- */
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]!);
+const CARE_TEXT = (m: ReportData['selfCare'][number]) =>
+  [m.yes && `${m.yes} le ayudó`, m.some && `${m.some} un poco`, m.no && `${m.no} no le ayudó`, m.unknown && `${m.unknown} sin dato`].filter(Boolean).join(' · ');
 const RELIEF_TEXT = (m: ReportData['medications'][number]) =>
   [m.full && `${m.full} alivio total`, m.partial && `${m.partial} parcial`, m.none && `${m.none} sin alivio`, m.unknown && `${m.unknown} sin dato`].filter(Boolean).join(' · ');
 
@@ -180,6 +199,9 @@ export function reportHtml(d: ReportData, sections: ReportSection[]): string {
   const meds = d.medications.length
     ? `<ul>${d.medications.map((m) => `<li><b>${esc(m.name)}</b>: ${m.times} ${m.times === 1 ? 'vez' : 'veces'} · ${RELIEF_TEXT(m)}</li>`).join('')}</ul><p class="muted">Días con medicamento en el periodo: ${d.medicationDays} de ${d.daysInRange}.</p>`
     : '<p class="muted">Sin medicamentos registrados.</p>';
+  const selfCare = d.selfCare.length
+    ? `<p style="margin:4px 0 2px"><b>Medidas sin medicamento que probó</b></p><ul>${d.selfCare.map((m) => `<li>${esc(m.title)}: ${m.times} ${m.times === 1 ? 'vez' : 'veces'} · ${CARE_TEXT(m)}</li>`).join('')}</ul>`
+    : '';
 
   const exps = d.experiments.length
     ? `<ul>${d.experiments.map((x) => `<li><b>${esc(x.title)}</b> (${x.status}). ${esc(x.summary)}</li>`).join('')}</ul>`
@@ -216,7 +238,7 @@ ${has('timeline') ? block('Línea de tiempo · intensidad máxima diaria (0–10
 <div class="grid">
   <div>
     ${has('summary') ? block('Resumen de episodios', summary) : ''}
-    ${has('medications') ? block('Medicamentos de rescate y alivio', meds) : ''}
+    ${has('medications') ? block('Medicamentos de rescate y alivio', meds + selfCare) : ''}
     ${has('experiments') ? block('Experimentos', exps) : ''}
   </div>
   <div>

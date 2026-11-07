@@ -86,6 +86,16 @@ Ahora no recibes texto sino una FOTO que la persona tomó para registrar: un pla
 - "summary": describe en UNA frase, en español y con tuteo, lo que ves en la foto con sus ingredientes visibles (p. ej. "Una bandeja paisa con arroz, frijoles, chicharrón, huevo frito, tajada de maduro y aguacate.").
 - Si la foto no muestra comida, bebida ni medicamento: "events": [] y en "unparsed" una descripción corta de lo que se ve.`;
 
+// D90: la IA NO redacta consejos. Solo elige ids de una lista revisada que manda la app; la app
+// descarta cualquier id que no esté en esa lista.
+const RELIEF_PROMPT = `Eres el componente de Kalma que elige ideas generales de alivio para alguien en Colombia que acaba de anotar un síntoma, mientras habla con su médico. NO diagnosticas, NO recomiendas medicamentos, NO escribes consejos: solo eliges de la lista "Opciones".
+
+Responde SOLO con un objeto JSON: {"ids": string[]}
+- Elige de 1 a 3 ids de "Opciones", la más útil primero, según el síntoma, su intensidad y lo que la persona contó.
+- Usa exactamente los ids de la lista. No inventes ids.
+- Si la intensidad es alta (7 o más), prefiere medidas de reposo sobre las que piden moverse.
+- Si lleva muchas horas sin comer, considera la opción de comer algo, si está en la lista.`;
+
 const VISIT_PROMPT = `Eres el componente que ordena lo que una persona en Colombia cuenta al salir de su cita médica. NO interpretas, NO corriges al médico, NO agregas información: solo organizas lo que la persona dijo.
 
 Responde SOLO con un objeto JSON:
@@ -121,10 +131,10 @@ Deno.serve(async (req) => {
   const { task, text, now, image, mimeType } = body;
   const okText = typeof text === 'string' && !!text.trim() && text.length <= MAX_TEXT;
   const okImage = typeof image === 'string' && image.length > 0 && image.length <= MAX_IMAGE && IMAGE_TYPES.includes(mimeType ?? '');
-  const valid = typeof now === 'string' && (task === 'entry' || task === 'visit' ? okText : task === 'photo' ? okImage : false);
+  const valid = typeof now === 'string' && (task === 'entry' || task === 'visit' || task === 'relief' ? okText : task === 'photo' ? okImage : false);
   if (!valid) return json(400, { error: 'bad_request' });
 
-  const prompt = task === 'entry' ? ENTRY_PROMPT : task === 'visit' ? VISIT_PROMPT : PHOTO_PROMPT;
+  const prompt = task === 'entry' ? ENTRY_PROMPT : task === 'visit' ? VISIT_PROMPT : task === 'relief' ? RELIEF_PROMPT : PHOTO_PROMPT;
   const parts = task === 'photo'
     ? [{ text: `AHORA (hora local de la persona): ${now}` }, { inlineData: { mimeType, data: image } }]
     : [{ text: `AHORA (hora local de la persona): ${now}\n\nTexto:\n${text}` }];

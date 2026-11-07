@@ -16,6 +16,7 @@ import { buildFollowUp, extractEntry, summarize } from '@/mocks/extractEntry';
 import { organizeVisit, type OrganizedVisit } from '@/mocks/organizeVisit';
 import { detectRedFlags } from './redFlags';
 import { ExtractedEventSchema, ExtractionSchema, type Extraction, type ExtractedEvent } from './schema';
+import { ideasForKind, localReliefIdeas, pickValidIdeas, type ReliefContext, type ReliefIdea, type SymptomKind } from './relief';
 import { supabase } from './supabase';
 
 export type Engine = 'gemini' | 'local';
@@ -25,7 +26,7 @@ const TIMEOUT_MS = 9000;
 export const localIso = (d: Date) => format(d, "yyyy-MM-dd'T'HH:mm:ssXXX");
 
 type AiRequest =
-  | { task: 'entry' | 'visit'; text: string }
+  | { task: 'entry' | 'visit' | 'relief'; text: string }
   | { task: 'photo'; image: string; mimeType: string };
 
 async function callAi(req: AiRequest, now: Date, timeoutMs = TIMEOUT_MS): Promise<unknown | null> {
@@ -138,4 +139,35 @@ export async function understandPhoto(base64: string, mimeType: string, takenAt:
     unparsed: null,
   });
   return { extraction, seen, caption };
+}
+
+/**
+ * Ideas de alivio (D90). Gemini NO escribe consejos: recibe la lista revisada (id + título) y solo
+ * elige hasta 3 ids según lo que la persona contó. Lo que no esté en la lista se descarta y, si la IA
+ * falla, tarda más de 6 s o no hay internet, las elige el celular.
+ */
+export async function chooseRelief(
+  kind: SymptomKind,
+  symptom: string,
+  ctx: ReliefContext & { said?: string },
+  now = new Date(),
+): Promise<{ ideas: ReliefIdea[]; engine: Engine }> {
+  const local = localReliefIdeas(kind, ctx);
+  const options = ideasForKind(kind);
+  if (options.length <= 3) return { ideas: local, engine: 'local' };
+  const text = [
+    `Síntoma: ${symptom}${ctx.intensity !== null ? ` (intensidad ${ctx.intensity} de 10)` : ''}.`,
+    ctx.hoursSinceFood === null ? 'Hoy no ha anotado comidas.' : `Última comida anotada hace ${Math.round(ctx.hoursSinceFood)} h.`,
+    ctx.tookMedication ? 'Ya tomó algo para esto.' : '',
+    ctx.said ? `Lo que dijo: "${ctx.said.slice(0, 400)}"` : '',
+    'Opciones:',
+    ...options.map((o) => `${o.id}: ${o.title}`),
+  ].filter(Boolean).join('\n');
+  const result = await callAi({ task: 'relief', text }, now, 6000);
+  const ids = result && typeof result === 'object' ? (result as { ids?: unknown }).ids : null;
+  const ideas = pickValidIdeas(ids, kind);
+  // Si la IA eligió menos de 3 válidas, se completa con las locales
+  if (ideas.length === 0) return { ideas: local, engine: 'local' };
+  for (const l of local) if (ideas.length < 3 && !ideas.includes(l)) ideas.push(l);
+  return { ideas, engine: 'gemini' };
 }
