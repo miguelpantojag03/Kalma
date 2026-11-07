@@ -1,10 +1,14 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { CalendarDays, House, Sparkles, UserRound, type LucideIcon } from 'lucide-react-native';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { haptic } from '@/lib/haptics';
-import { layout, space, touch, typeScale, useTheme } from '@/theme';
+import { layout, space, spring, touch, typeScale, useTheme } from '@/theme';
 import { KText } from './KText';
+import { Material } from './Material';
 import { MicButton } from './MicButton';
+import { PressableScale } from './PressableScale';
 
 export interface TabMeta {
   label: string;
@@ -19,16 +23,94 @@ export const TAB_META: Record<string, TabMeta> = {
   perfil: { label: 'Perfil', icon: UserRound },
 };
 
+/** Espacio que el contenido de una pestaña debe dejar abajo (barra + micrófono que sobresale + aire). */
+export function tabBarClearance(bottomInset: number) {
+  return layout.tabBarHeight + Math.max(bottomInset, space[2]) + touch.mic / 2 + space[4];
+}
+
 export interface TabBarProps extends BottomTabBarProps {
   onRecord: () => void;
   /** Badges por ruta: número o "dot" (novedad). */
   badges?: Partial<Record<string, number | 'dot'>>;
 }
 
+interface TabItemProps {
+  label: string;
+  icon: LucideIcon;
+  focused: boolean;
+  badge?: number | 'dot';
+  testID?: string;
+  onPress: () => void;
+  onLongPress: () => void;
+}
+
+function TabItem({ label, icon: Icon, focused, badge, testID, onPress, onLongPress }: TabItemProps) {
+  const { c } = useTheme();
+  const reduce = useReducedMotion();
+  const p = useSharedValue(focused ? 1 : 0);
+
+  useEffect(() => {
+    p.value = reduce ? (focused ? 1 : 0) : withSpring(focused ? 1 : 0, spring.default);
+  }, [focused, reduce, p]);
+
+  // La pastilla nace desde el ícono hacia los lados (anclada a su origen), no aparece de golpe.
+  const pill = useAnimatedStyle(() => ({
+    opacity: p.value,
+    transform: [{ scaleX: 0.55 + p.value * 0.45 }],
+  }));
+
+  const badgeText = badge === 'dot' ? ', hay novedades' : typeof badge === 'number' && badge > 0 ? `, ${badge} nuevos` : '';
+
+  return (
+    <PressableScale
+      accessibilityRole="tab"
+      accessibilityState={{ selected: focused }}
+      accessibilityLabel={`${label}${badgeText}`}
+      testID={testID}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      style={styles.tab}
+    >
+      <View style={styles.pill}>
+        <Animated.View style={[StyleSheet.absoluteFill, styles.pillBg, { backgroundColor: c.accent }, pill]} />
+        {/* En su propia vista: así queda por encima de la pastilla también en web */}
+        <View>
+          <Icon size={24} strokeWidth={focused ? 2.5 : 2} color={focused ? c.text : c.muted} />
+        </View>
+        {badge !== undefined && (badge === 'dot' || badge > 0) && (
+          <View
+            style={[
+              styles.badge,
+              badge === 'dot' ? styles.badgeDot : styles.badgeNum,
+              { backgroundColor: c.primaryStrong, borderColor: c.surface },
+            ]}
+          >
+            {badge !== 'dot' && (
+              <KText tone="onPrimary" style={styles.badgeLabel} maxFontSizeMultiplier={1.2}>
+                {badge}
+              </KText>
+            )}
+          </View>
+        )}
+      </View>
+      {/* Etiqueta siempre visible (no solo el ícono) — tope de escala para no romper la barra */}
+      <KText
+        style={[typeScale.caption, { color: focused ? c.text : c.muted, fontFamily: focused ? 'Inter_700Bold' : 'Inter_500Medium' }]}
+        maxFontSizeMultiplier={1.3}
+        numberOfLines={1}
+      >
+        {label}
+      </KText>
+    </PressableScale>
+  );
+}
+
 /**
  * Hoy · Calendario · [🎙] · Patrones · Perfil.
  * El micrófono queda al centro, grande y elevado: es la acción más frecuente y cae en la zona
  * natural del pulgar (ley de Fitts); patrón conocido de apps móviles (ley de Jakob).
+ * La barra flota sobre el contenido con un material translúcido (D86): el contenido pasa por
+ * debajo, por eso cada pestaña deja `tabBarClearance` de aire abajo (lo hace Screen con `tab`).
  */
 export function TabBar({ state, descriptors, emitter, navigateToTab, insets, onRecord, badges = {} }: TabBarProps) {
   const { c } = useTheme();
@@ -40,64 +122,31 @@ export function TabBar({ state, descriptors, emitter, navigateToTab, insets, onR
     const index = state.routes.findIndex((r) => r.key === route.key);
     const focused = index === state.index;
     const meta = TAB_META[route.name]!;
-    const Icon = meta.icon;
-    const badge = badges[route.name];
-    const badgeText = badge === 'dot' ? ', hay novedades' : typeof badge === 'number' && badge > 0 ? `, ${badge} nuevos` : '';
-    const options = descriptors[route.key]?.options;
-
     return (
-      <Pressable
+      <TabItem
         key={route.key}
-        accessibilityRole="tab"
-        accessibilityState={{ selected: focused }}
-        accessibilityLabel={`${meta.label}${badgeText}`}
-        testID={options?.tabBarButtonTestID}
+        label={meta.label}
+        icon={meta.icon}
+        focused={focused}
+        badge={badges[route.name]}
+        testID={descriptors[route.key]?.options?.tabBarButtonTestID}
         onPress={() => {
           haptic.tap();
           const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
           if (!focused && !event.defaultPrevented) navigateToTab(route.key);
         }}
         onLongPress={() => emitter.emit({ type: 'tabLongPress', target: route.key })}
-        style={styles.tab}
-      >
-        <View style={[styles.pill, focused && { backgroundColor: c.accent }]}>
-          <Icon size={24} strokeWidth={focused ? 2.5 : 2} color={focused ? c.text : c.muted} />
-          {badge !== undefined && (badge === 'dot' || badge > 0) && (
-            <View
-              style={[
-                styles.badge,
-                badge === 'dot' ? styles.badgeDot : styles.badgeNum,
-                { backgroundColor: c.primaryStrong, borderColor: c.surface },
-              ]}
-            >
-              {badge !== 'dot' && (
-                <KText tone="onPrimary" style={styles.badgeLabel} maxFontSizeMultiplier={1.2}>
-                  {badge}
-                </KText>
-              )}
-            </View>
-          )}
-        </View>
-        {/* Etiqueta siempre visible (no solo el ícono) — tope de escala para no romper la barra */}
-        <KText
-          style={[typeScale.caption, { color: focused ? c.text : c.muted, fontFamily: focused ? 'Inter_700Bold' : 'Inter_500Medium' }]}
-          maxFontSizeMultiplier={1.3}
-          numberOfLines={1}
-        >
-          {meta.label}
-        </KText>
-      </Pressable>
+      />
     );
   };
 
   return (
     <View
       accessibilityRole="tablist"
-      style={[
-        styles.bar,
-        { backgroundColor: c.surface, borderTopColor: c.border, paddingBottom: Math.max(insets.bottom, space[2]) },
-      ]}
+      style={[styles.bar, { paddingBottom: Math.max(insets.bottom, space[2]) }]}
     >
+      {/* El material va detrás y no recorta: el micrófono sobresale por arriba */}
+      <Material pointerEvents="none" style={[StyleSheet.absoluteFill, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border }]} />
       {left.map(renderTab)}
       <View style={styles.center}>
         <View style={styles.micLift}>
@@ -113,9 +162,13 @@ export function TabBar({ state, descriptors, emitter, navigateToTab, insets, onR
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'flex-end', borderTopWidth: 1, paddingTop: space[2], minHeight: layout.tabBarHeight },
+  bar: {
+    position: 'absolute', left: 0, right: 0, bottom: 0,
+    flexDirection: 'row', alignItems: 'flex-end', paddingTop: space[2], minHeight: layout.tabBarHeight,
+  },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, minHeight: touch.min },
-  pill: { width: 56, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  pill: { width: 56, height: 32, alignItems: 'center', justifyContent: 'center' },
+  pillBg: { borderRadius: 16 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 2 },
   micLift: { marginTop: -touch.mic / 2 },
   badge: { position: 'absolute', borderWidth: 2, alignItems: 'center', justifyContent: 'center' },

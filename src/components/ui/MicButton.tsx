@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { PressableScale } from './PressableScale';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -82,7 +83,7 @@ export function MicButton({ state = 'idle', size = 'hero', level = 0, onPress, l
           style={[StyleSheet.absoluteFill, { borderRadius: dim / 2, backgroundColor: c.accent }, halo]}
         />
       )}
-      <Pressable
+      <PressableScale
         accessibilityRole="button"
         accessibilityLabel={label ?? LABELS[state]}
         accessibilityHint={HINTS[state]}
@@ -103,7 +104,6 @@ export function MicButton({ state = 'idle', size = 'hero', level = 0, onPress, l
             backgroundColor: inactive ? c.surface : c.primaryStrong,
             borderWidth: inactive ? 2 : 0,
             borderColor: c.borderStrong,
-            transform: [{ scale: pressed ? 0.95 : 1 }],
             opacity: state === 'processing' ? 0.85 : 1,
           },
           elevation(2, scheme),
@@ -113,7 +113,7 @@ export function MicButton({ state = 'idle', size = 'hero', level = 0, onPress, l
         {state === 'listening' && <Square size={iconSize * 0.7} color={c.onPrimary} fill={c.onPrimary} />}
         {state === 'processing' && <ActivityIndicator size="large" color={c.onPrimary} />}
         {inactive && <MicOff size={iconSize} color={c.muted} />}
-      </Pressable>
+      </PressableScale>
     </View>
   );
 }

@@ -571,3 +571,33 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - **Conteo coherente:** Hoy y Patrones cuentan igual (días con registros, incluido hoy si ya anotaste algo). Los cálculos usan solo días completos.
 - **Alternativa descartada:** bajar los patrones a 3 o 7 días. Con 3 días, cualquier cosa parece patrón (si comes arepa los 3 días y te duele la cabeza los 3, diría «100 % después de arepa»), y la persona podría dejar alimentos sin razón.
 - **Cómo se validará:** 6 pruebas automáticas (la coincidencia plantada aparece a la semana con 4 semillas distintas; un factor diario no es pista; sin repetidas; desaparecen a los 14 días). En la prueba de usabilidad: «¿Qué harías con esta pista?» (meta: nadie dice que dejaría un alimento solo por eso).
+
+## Fase 13 · Interfaz fluida (guía de diseño de Apple)
+
+### D84. Resortes en vez de animaciones con duración fija, y respuesta al tocar
+- **Necesidad del usuario:** que la app se sienta viva y responda al dedo, no como una página que cambia de estado. En la revisión se sentía «básica».
+- **Principio:** respuesta inmediata e interrumpibilidad (Apple, *Designing Fluid Interfaces*). Todo el movimiento usa resortes definidos en `src/theme/motion.ts` con dos números: amortiguación (1 = sin rebote) y respuesta. Un resorte parte siempre del valor que se ve en pantalla y hereda la velocidad, así que se puede interrumpir sin saltos. Botones, chips, filas, tarjetas de patrón, micrófono y pestañas se encogen con un resorte **al tocar** (no al soltar) y vuelven desde donde estén. Solo rebota lo que se soltó con impulso.
+- **Alternativa descartada:** animaciones con curva y duración fija (no se pueden agarrar a mitad de camino) y rebote en todo (distrae; en una app de salud el tono es calma).
+- **Accesibilidad:** con «Reducir movimiento» nada cambia de tamaño; queda el cambio de color.
+- **Cómo se validará:** prueba de usabilidad: «¿Cómo describirías la app en una palabra?» antes y después; revisar en cámara lenta (grabación de pantalla) que no haya saltos al interrumpir.
+
+### D85. La hoja inferior se arrastra con el dedo
+- **Necesidad del usuario:** cerrar una hoja como en cualquier app del celular, bajándola con el pulgar.
+- **Principio:** manipulación directa y familiaridad (ley de Jakob). La hoja sigue al dedo 1:1 desde la manija o el título; hacia arriba resiste progresivamente (no hay más hoja) en vez de frenar en seco. Al soltar se **proyecta el impulso** (la misma función de desaceleración del scroll de iOS): un gesto rápido hacia abajo la cierra aunque haya bajado poco; si no, vuelve. En ambos casos sigue con la velocidad del dedo, sin «costura». Se puede volver a agarrar mientras se mueve.
+- **Error evitado:** la cámara en iPhone (D82) ahora espera el aviso de que la hoja terminó de cerrarse, en vez de un tiempo fijo que podía quedar corto con el resorte.
+- **Alternativa descartada:** arrastrar desde cualquier parte de la hoja (choca con el scroll del contenido) y cerrar solo según la distancia (un gesto rápido y corto no la cerraría).
+- **Accesibilidad:** arrastrar nunca es la única forma: siguen el botón «Cerrar», tocar el fondo y «atrás» en Android. Las hojas que no deben cerrarse por accidente (`dismissible={false}`) no se arrastran.
+- **Cómo se validará:** 4 pruebas automáticas de la física (proyección, resistencia, solo un resorte rebota); en la prueba de usabilidad, observar si cierran la hoja deslizando sin que se les diga.
+
+### D86. Barras translúcidas que flotan sobre el contenido y título grande que se colapsa
+- **Necesidad del usuario:** ver más de su día sin perder de vista dónde está.
+- **Principio:** profundidad con materiales y orientación (Nielsen #1, «¿dónde estoy?»). La barra de pestañas flota sobre el contenido con un material translúcido (desenfoque del sistema en iPhone teñido con el fondo de Kalma) y el contenido pasa por debajo. En las pestañas, el título grande se va con el scroll y, justo cuando desaparece, aparece una barra compacta translúcida con el mismo título. La línea divisoria solo existe cuando hay contenido debajo. La pastilla de la pestaña activa nace desde el ícono con un resorte.
+- **Alternativa descartada:** barras opacas fijas (ocupan una franja todo el tiempo) y desenfoque en Android (necesita configuración nativa y no es fiable en Expo Go; ahí la barra es sólida).
+- **Accesibilidad:** con «Reducir transparencia» (iOS) las barras son sólidas. La barra compacta es decorativa para el lector de pantalla (el título grande ya se anuncia como encabezado).
+- **Cómo se validará:** contraste del texto de la barra sobre el material en claro y oscuro con contenido variado debajo; prueba en iPhone real.
+
+### D87. Espaciado entre letras según el tamaño
+- **Necesidad del usuario:** leer rápido títulos y textos pequeños.
+- **Principio:** artesanía tipográfica (Apple, *The Details of UI Typography*). Los títulos grandes se aprietan (−0,6 pt en 34, −0,4 en 28), el cuerpo queda en 0 y el texto pequeño se abre un poco (+0,1 en 14, +0,2 en 12). El interlineado de los títulos baja a ≈1,15; el de los párrafos se mantiene en 1,5.
+- **Alternativa descartada:** un solo espaciado para todo (los títulos de Nunito se ven sueltos y las leyendas de 12 pt se apiñan).
+- **Cómo se validará:** revisión visual en 390 px y con letra grande del sistema (los tamaños escalan; el espaciado también).
