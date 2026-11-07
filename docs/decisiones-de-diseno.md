@@ -601,3 +601,9 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - **Principio:** artesanía tipográfica (Apple, *The Details of UI Typography*). Los títulos grandes se aprietan (−0,6 pt en 34, −0,4 en 28), el cuerpo queda en 0 y el texto pequeño se abre un poco (+0,1 en 14, +0,2 en 12). El interlineado de los títulos baja a ≈1,15; el de los párrafos se mantiene en 1,5.
 - **Alternativa descartada:** un solo espaciado para todo (los títulos de Nunito se ven sueltos y las leyendas de 12 pt se apiñan).
 - **Cómo se validará:** revisión visual en 390 px y con letra grande del sistema (los tamaños escalan; el espaciado también).
+
+### D88. «No pude conectarme» en vez de «Necesitas internet»
+- **Necesidad del usuario:** entender por qué no puede crear la cuenta cuando sí tiene internet.
+- **Principio:** honestidad del sistema (Nielsen #1) y ayuda a reconocer el error (#9). El proyecto de Supabase se pausó por inactividad (plan gratuito) y la app decía «Necesitas internet», culpando a la conexión de la persona. Desde el celular no se distingue «sin internet» de «servidor caído» (ambos fallan antes de responder), así que el mensaje dice lo que sí se sabe y ofrece una salida: «No pude conectarme con Kalma. Revisa tu internet; si sí tienes, el servicio puede estar en pausa…» y explorar con datos de ejemplo.
+- **Alternativa descartada:** consultar otro sitio para adivinar la causa (más latencia, y depende de un tercero).
+- **Cómo se validará:** prueba con el modo avión y con el servidor pausado: en ambos casos la persona sabe qué hacer.

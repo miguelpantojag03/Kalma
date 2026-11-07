@@ -25,7 +25,9 @@ const MESSAGES: Record<AuthErrorKind, string> = {
   'email-taken': 'Ya hay una cuenta con este correo. ¿Quieres iniciar sesión?',
   'weak-password': 'Esa contraseña es muy fácil de adivinar. Prueba con una más larga, con letras y números.',
   'rate-limit': 'Espera un momento e inténtalo de nuevo.',
-  offline: 'Necesitas internet para crear tu cuenta o iniciar sesión.',
+  // No se distingue "sin internet" de "servidor caído": las dos fallan igual antes de responder.
+  // Por eso no culpa a la conexión de la persona (D88).
+  offline: 'No pude conectarme con Kalma. Revisa tu internet; si sí tienes, el servicio puede estar en pausa: inténtalo en unos minutos o explora con datos de ejemplo.',
   // Genérico a propósito: no revela si el correo existe (D53)
   'invalid-credentials': 'El correo o la contraseña no coinciden.',
   'email-not-confirmed': 'Aún no confirmas tu correo. Te podemos enviar el enlace otra vez.',
