@@ -20,3 +20,5 @@ export * from './CompareBars';
 export * from './Checkbox';
 export * from './PasswordField';
 export * from './ListRow';
+export * from './Material';
+export * from './PressableScale';

@@ -155,11 +155,23 @@ export function RecordScreen() {
 
   /* ---------- foto (reconocida con Gemini) ---------- */
 
+  const photoClosedRef = useRef<(() => void) | null>(null);
+
   const takePhoto = async (from: 'camera' | 'library', afterSheet = true) => {
     setPhotoOpen(false);
     // iOS no abre la cámara ni la galería mientras la hoja (un modal) todavía se está cerrando:
-    // fallaba sin avisar. Se espera a que termine de cerrarse.
-    if (afterSheet && Platform.OS === 'ios') await new Promise((r) => setTimeout(r, 600));
+    // fallaba sin avisar. Se espera el aviso de la hoja (onClosed) y un margen para que iOS quite
+    // el modal; si el aviso no llega, a los 1,5 s se sigue igual.
+    if (afterSheet && Platform.OS === 'ios') {
+      await new Promise<void>((r) => {
+        const fallback = setTimeout(r, 1500);
+        photoClosedRef.current = () => {
+          clearTimeout(fallback);
+          setTimeout(r, 300);
+        };
+      });
+      photoClosedRef.current = null;
+    }
     if (from === 'camera') {
       const perm = await ImagePicker.getCameraPermissionsAsync();
       if (!perm.granted && perm.canAskAgain) return setPhase({ k: 'camera-permission' });
@@ -395,7 +407,7 @@ export function RecordScreen() {
 
       <ExamplesSheet open={examplesOpen} onClose={() => setExamplesOpen(false)} onPick={simulate} />
 
-      <BottomSheet open={photoOpen} onClose={() => setPhotoOpen(false)} title="Registrar con una foto" description="De tu plato o de la caja de un medicamento.">
+      <BottomSheet open={photoOpen} onClose={() => setPhotoOpen(false)} onClosed={() => photoClosedRef.current?.()} title="Registrar con una foto" description="De tu plato o de la caja de un medicamento.">
         <Button fullWidth variant="secondary" label="Tomar foto" icon={(c) => <Camera size={20} color={c} />} onPress={() => void takePhoto('camera')} />
         <Button fullWidth variant="secondary" label="Elegir de la galería" icon={(c) => <Images size={20} color={c} />} onPress={() => void takePhoto('library')} />
       </BottomSheet>

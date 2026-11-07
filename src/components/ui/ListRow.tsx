@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { PressableScale } from './PressableScale';
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
 import { radius, space, touch, useTheme } from '@/theme';
 import { haptic } from '@/lib/haptics';
@@ -34,7 +35,7 @@ export function ListRow({ icon: Icon, label, description, trailing, onPress, dis
   );
   if (!onPress) return <View style={styles.row}>{content}</View>;
   return (
-    <Pressable
+    <PressableScale weight="card"
       accessibilityRole="button"
       accessibilityLabel={description ? `${label}. ${description}` : label}
       accessibilityState={{ disabled: !!disabled }}
@@ -46,7 +47,7 @@ export function ListRow({ icon: Icon, label, description, trailing, onPress, dis
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? c.surfaceMuted : 'transparent', opacity: disabled ? 0.5 : 1 }]}
     >
       {content}
-    </Pressable>
+    </PressableScale>
   );
 }
 

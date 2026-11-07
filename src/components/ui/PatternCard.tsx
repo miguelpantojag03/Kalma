@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { PressableScale } from './PressableScale';
 import { ChevronRight, Sparkles } from 'lucide-react-native';
 import { PATTERN_LEVEL_LABEL, type PatternLevel } from '@/lib/types';
 import { elevation, radius, space, useTheme } from '@/theme';
@@ -44,7 +45,7 @@ export interface PatternCardProps {
 export function PatternCard({ level, statement, evidence, isNew, dismissed, onPress }: PatternCardProps) {
   const { c, scheme } = useTheme();
   return (
-    <Pressable
+    <PressableScale weight="card"
       disabled={!onPress}
       onPress={onPress}
       accessibilityRole={onPress ? 'button' : undefined}
@@ -56,7 +57,6 @@ export function PatternCard({ level, statement, evidence, isNew, dismissed, onPr
           backgroundColor: c.surface,
           borderColor: isNew && !dismissed ? c.primary : 'transparent',
           opacity: dismissed ? 0.6 : 1,
-          transform: [{ scale: pressed ? 0.99 : 1 }],
         },
         !dismissed && elevation(1, scheme),
       ]}
@@ -81,7 +81,7 @@ export function PatternCard({ level, statement, evidence, isNew, dismissed, onPr
           </View>
         )}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 

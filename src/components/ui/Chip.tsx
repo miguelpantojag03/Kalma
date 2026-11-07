@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { PressableScale } from './PressableScale';
 import { Check } from 'lucide-react-native';
 import { haptic } from '@/lib/haptics';
 import { radius, space, touch, typeScale, useTheme } from '@/theme';
@@ -23,7 +24,7 @@ export interface ChipProps {
 export function Chip({ label, selected = false, onPress, mode = 'single', icon, disabled, compact, style }: ChipProps) {
   const { c } = useTheme();
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole={mode === 'single' ? 'radio' : 'checkbox'}
       accessibilityState={{ checked: selected, disabled: !!disabled }}
       accessibilityLabel={label}
@@ -51,7 +52,7 @@ export function Chip({ label, selected = false, onPress, mode = 'single', icon, 
         icon && <View importantForAccessibility="no-hide-descendants">{icon(c.text)}</View>
       )}
       <KText style={[compact ? typeScale.small : typeScale.body, { fontFamily: 'Inter_500Medium', flexShrink: 1 }]}>{label}</KText>
-    </Pressable>
+    </PressableScale>
   );
 }
 

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View, type PressableProps, type ViewStyle } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, type PressableProps, type ViewStyle } from 'react-native';
+import { PressableScale } from './PressableScale';
 import { haptic } from '@/lib/haptics';
 import { elevation, radius, space, touch, typeScale, useTheme } from '@/theme';
 import { KText } from './KText';
@@ -48,7 +49,7 @@ export function Button({
   const shown = loading && loadingLabel ? loadingLabel : label;
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={shown}
       accessibilityHint={accessibilityHint}
@@ -67,7 +68,6 @@ export function Button({
           borderColor: p.border ?? 'transparent',
           borderWidth: p.border ? 2 : 0,
           opacity: isDisabled ? 0.5 : pressed && (variant === 'primary' || variant === 'danger') ? 0.85 : 1,
-          transform: [{ scale: pressed && !isDisabled ? 0.98 : 1 }],
         },
         (variant === 'primary' || variant === 'danger') && !isDisabled && elevation(1, scheme),
         fullWidth && styles.full,
@@ -90,7 +90,7 @@ export function Button({
       >
         {shown}
       </KText>
-    </Pressable>
+    </PressableScale>
   );
 }
 
