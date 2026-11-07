@@ -42,6 +42,8 @@ Sin estas variables, el APK abre solo en modo demo (los botones de cuenta se mue
 eas build -p android --profile preview
 ```
 
+El perfil `preview` está conectado al canal `preview` de EAS Update: después de instalar el APK, cada `eas update --branch preview` le llega solo al abrir la app (dos veces: la primera la descarga, la segunda la usa). Solo hace falta un APK nuevo si cambia algo nativo (un paquete con código nativo, permisos o `app.json`).
+
 Al terminar (≈ 10–15 min en la cola gratuita), EAS muestra un enlace y un QR para descargar el APK. En el celular: permitir "instalar apps de origen desconocido" para el navegador.
 
 ## 4. Antes de la prueba con participantes
