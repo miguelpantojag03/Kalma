@@ -24,12 +24,20 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
+          # Limpia lo que suele colarse al pegar: comillas, espacios, saltos de línea y la barra final
+          clean() { printf '%s' "$1" | tr -d '"'"'"' \r\n\t'; }
+          SUPABASE_URL=$(clean "$SUPABASE_URL"); SUPABASE_URL=${SUPABASE_URL%/}
+          SUPABASE_ANON_KEY=$(clean "$SUPABASE_ANON_KEY")
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
             echo "::error::Faltan los secretos SUPABASE_URL y SUPABASE_ANON_KEY"
             exit 1
           fi
+          if ! printf '%s' "$SUPABASE_URL" | grep -Eq '^https://[a-z0-9]+\.supabase\.co$'; then
+            echo "::error::SUPABASE_URL no tiene la forma https://<proyecto>.supabase.co (empieza con '${SUPABASE_URL:0:12}…')"
+            exit 1
+          fi
           code=$(curl -s -o /dev/null -w '%{http_code}' --retry 3 --max-time 30 \
-            "$SUPABASE_URL/rest/v1/profiles?select=id&limit=1" \
+            "$SUPABASE_URL/rest/v1/profiles?select=*&limit=1" \
             -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY")
           echo "Respuesta: $code"
           # Si el proyecto ya está pausado, el dominio no existe (000): hay que reactivarlo a mano
