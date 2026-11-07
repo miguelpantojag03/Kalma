@@ -607,3 +607,9 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - **Principio:** honestidad del sistema (Nielsen #1) y ayuda a reconocer el error (#9). El proyecto de Supabase se pausó por inactividad (plan gratuito) y la app decía «Necesitas internet», culpando a la conexión de la persona. Desde el celular no se distingue «sin internet» de «servidor caído» (ambos fallan antes de responder), así que el mensaje dice lo que sí se sabe y ofrece una salida: «No pude conectarme con Kalma. Revisa tu internet; si sí tienes, el servicio puede estar en pausa…» y explorar con datos de ejemplo.
 - **Alternativa descartada:** consultar otro sitio para adivinar la causa (más latencia, y depende de un tercero).
 - **Cómo se validará:** prueba con el modo avión y con el servidor pausado: en ambos casos la persona sabe qué hacer.
+
+### D89. Supabase despierto y versiones exactas de Expo Go
+- **Necesidad del usuario:** que la app funcione el día que alguien la abra, aunque nadie la haya usado en semanas.
+- **Principio:** confiabilidad. El plan gratuito de Supabase pausa el proyecto tras unos días sin uso y entonces no se puede crear cuenta ni iniciar sesión (pasó el 7 de noviembre). Una tarea de GitHub (`.github/workflows/supabase-keepalive.yml`) consulta la base de datos cada día y falla con un aviso si el proyecto ya está pausado. Además, los paquetes se alinearon con las versiones exactas que trae Expo Go de la SDK 58 (`expo-doctor`: 20/20); una versión distinta de un módulo nativo puede cerrar la app al abrirla.
+- **Alternativa descartada:** pagar el plan Pro (no hace falta para un prototipo académico) o pedir a los evaluadores que avisen antes de probar.
+- **Cómo se validará:** el historial de la tarea en GitHub (una ejecución verde por día) y `expo-doctor` sin problemas antes de cada publicación.
