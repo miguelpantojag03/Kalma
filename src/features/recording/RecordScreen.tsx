@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { setHours } from 'date-fns';
 import { Camera, Images, Keyboard, ListChecks, X } from 'lucide-react-native';
@@ -216,10 +216,14 @@ export function RecordScreen() {
     });
     setPending(null);
     setPhase({ k: 'saved', count: events.length });
+    // Si contó un síntoma, la sugerencia sale en el momento (D91): la pantalla de registro se
+    // reemplaza por "Mientras tanto". Si no, vuelve a donde estaba.
+    const symptom = entry.events.find((e) => e.type === 'symptom');
     setTimeout(() => {
-      closeModal();
+      if (symptom) router.replace(`/alivio/${symptom.id}` as Href);
+      else closeModal();
       showToast({ message: 'Listo, lo guardé', actionLabel: 'Deshacer', onAction: () => removeEntry(entry.id) });
-    }, 1600);
+    }, symptom ? 900 : 1600);
   };
 
   const close = () => {

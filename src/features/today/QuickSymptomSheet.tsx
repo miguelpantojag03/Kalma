@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { Banner, BottomSheet, Button, Chip, ChipGroup, IntensitySlider, useToast } from '@/components/ui';
 import { useCanRecord } from '@/components/NeedsConsent';
 import { haptic } from '@/lib/haptics';
@@ -52,6 +52,9 @@ export function QuickSymptomSheet({ open, onClose }: { open: boolean; onClose: (
     setName(null);
     setIntensity(5);
     showToast({ message: 'Listo, lo guardé', actionLabel: 'Deshacer', onAction: () => removeEntry(entry.id) });
+    // La sugerencia sale en el momento (D91)
+    const symptom = entry.events[0];
+    if (symptom) router.push(`/alivio/${symptom.id}` as Href);
   };
 
   return (

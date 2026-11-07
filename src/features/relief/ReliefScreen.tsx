@@ -142,6 +142,9 @@ export function ReliefScreen() {
         <KText variant="caption" tone="muted">
           Si tu médico ya te indicó un medicamento o un plan para esto, sigue sus indicaciones.
         </KText>
+
+        {/* Salida siempre visible: se llega aquí justo después de grabar, a veces sin pantalla anterior */}
+        <Button fullWidth size="lg" label="Volver a Hoy" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
       </Screen>
     </>
   );
