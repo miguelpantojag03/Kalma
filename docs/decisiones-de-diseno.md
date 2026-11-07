@@ -630,3 +630,18 @@ Registro vivo de las decisiones de diseño de la app. Cada entrada responde la p
 - **Principio:** visibilidad y correspondencia con lo que la persona espera (Nielsen #1 y #2): la pregunta implícita de «me duele» es «¿qué hago?», y la respuesta debe llegar en el mismo momento. Al guardar un registro con un síntoma (por voz, escrito o con «Me empezó un síntoma»), la pantalla de registro se reemplaza por «Mientras tanto». Registrar sigue tomando lo mismo: la sugerencia aparece **después** de guardar, no antes. La tarjeta en Hoy se mantiene para volver a las ideas durante 6 horas. Al final hay un botón «Volver a Hoy» que funciona aunque no haya pantalla anterior.
 - **Alternativa descartada:** dejar solo la tarjeta en Hoy (la persona no la descubrió) y preguntar «¿Quieres ideas?» antes de mostrarlas (un toque más justo cuando se siente mal).
 - **Cómo se validará:** tarea de usabilidad «Cuéntale a Kalma que te duele la cabeza» (meta: ven las ideas sin buscarlas) y cuántas personas tocan «Lo probé».
+
+## Fase 15 · Auditoría de interfaz
+
+### D92. Menos tarjetas, una acción principal clara y controles del patrón correcto
+- **Necesidad del usuario:** entender cada pantalla de un vistazo. En la auditoría de UI (Hoy, Calendario, Patrones, Perfil y Mientras tanto, en claro y oscuro a 390 px), Hoy tenía nueve bloques del mismo peso visual y la acción principal competía con todo.
+- **Principio:** jerarquía visual y región común (Gestalt), ley de Hick (menos opciones con el mismo peso), consistencia (Nielsen #4) y ley de Jakob (patrones conocidos). Cambios:
+  - **Hoy:** el micrófono, «Me empezó un síntoma» y «Modo crisis» van en **una sola tarjeta**, porque las tres son formas de registrar; los dos accesos secundarios tienen el ícono arriba y el mismo tamaño. Después va lo del momento (ideas de alivio, patrón nuevo), el progreso y el día. El ciclo y el mensaje del día pasan al final; el mensaje deja de ser una tarjeta destacada y queda como una nota. La pantalla pasó de ~1.850 a ~1.640 px de alto.
+  - **Tu día:** una tarjeta por momento del día con filas y separadores finos, en vez de una tarjeta con sombra por registro.
+  - **Aviso de demo:** una sola línea con el enlace «Crear mi cuenta», en vez de tres líneas y un botón primario en cada pestaña.
+  - **Control segmentado** (componente nuevo) para elegir una opción que cambia la vista: Mes/Semana en Calendario y Automático/Claro/Oscuro en Perfil. Antes eran chips, que parecían filtros y bajaban de línea. Los filtros por síntoma quedan como chips en una sola fila deslizable.
+  - **Patrones:** «Nuevo» lo indica la etiqueta; se quitó el borde verde, que aparecía en todas y ya no distinguía nada.
+  - **Perfil › Demo:** las herramientas de demo son filas, como el resto de Perfil (antes, seis controles de tres estilos y un «Crear mi cuenta» repetido).
+  - **Mientras tanto:** «Ver mi reporte» usa el mismo enlace con flecha que «Ver detalle» y «Ver el experimento».
+- **Alternativa descartada:** quitar contenido de Hoy (el ciclo o el mensaje del día). Se mantienen, pero con el peso que les corresponde.
+- **Cómo se validará:** prueba de usabilidad, tarea «Registra que te empezó un dolor» (meta: menos de 5 s para encontrar la acción) y la pregunta «¿Qué es lo más importante de esta pantalla?» frente a Hoy.

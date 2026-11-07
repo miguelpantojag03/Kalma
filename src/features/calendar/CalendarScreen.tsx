@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { addMonths, addWeeks, isAfter, isSameDay, startOfMonth } from 'date-fns';
 import { Directions, GestureDetector, useFlingGesture, useSimultaneousGestures } from 'react-native-gesture-handler';
 import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { CalendarDay, Card, Chip, ChipGroup, EmptyState, IntensityBadge, KText } from '@/components/ui';
+import { CalendarDay, Card, Chip, EmptyState, IntensityBadge, KText, SegmentedControl } from '@/components/ui';
 import { Screen } from '@/components/Screen';
 import { monthMatrix, monthTitle, weekDays, WEEKDAY_LABELS } from '@/lib/calendar';
 import { dayKey, fullDate, shortDate } from '@/lib/dates';
@@ -13,7 +13,7 @@ import { intensityWord } from '@/lib/intensity';
 import { dayStatus, eventsByDay, symptomNames } from '@/lib/selectors';
 import { periodDays } from '@/lib/cycle';
 import { useKalma } from '@/lib/store';
-import { radius, space, touch, useTheme } from '@/theme';
+import { layout, radius, space, touch, useTheme } from '@/theme';
 
 type View_ = 'month' | 'week';
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -64,18 +64,29 @@ export function CalendarScreen() {
 
   return (
     <Screen tab title="Calendario">
-      <ChipGroup label="Vista" hideLabel>
-        <Chip compact label="Mes" selected={mode === 'month'} onPress={() => setMode('month')} />
-        <Chip compact label="Semana" selected={mode === 'week'} onPress={() => setMode('week')} />
-      </ChipGroup>
+      {/* Vista: una opción entre dos → control segmentado (D92) */}
+      <SegmentedControl
+        label="Vista del calendario"
+        value={mode}
+        onChange={setMode}
+        options={[{ value: 'month', label: 'Mes' }, { value: 'week', label: 'Semana' }]}
+      />
 
+      {/* Filtro: chips en una sola fila deslizable, sin bajar de línea */}
       {symptoms.length > 0 && (
-        <ChipGroup label="Filtrar por síntoma" hideLabel>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginHorizontal: -layout.gutter }}
+          contentContainerStyle={{ paddingHorizontal: layout.gutter, gap: space[2] }}
+          accessibilityRole="radiogroup"
+          accessibilityLabel="Filtrar por síntoma"
+        >
           <Chip compact label="Todos" selected={filter === null} onPress={() => setFilter(null)} />
           {symptoms.map((s) => (
             <Chip key={s} compact label={cap(s)} selected={filter === s} onPress={() => setFilter(s)} />
           ))}
-        </ChipGroup>
+        </ScrollView>
       )}
 
       <Card padding="md" style={{ gap: space[3] }}>

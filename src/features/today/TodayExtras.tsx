@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { subDays } from 'date-fns';
-import { ChevronRight, CloudUpload, Droplet, Sun } from 'lucide-react-native';
-import { Card, KText } from '@/components/ui';
+import { ChevronRight, CloudUpload, Droplet, Sun, type LucideIcon } from 'lucide-react-native';
+import { Card, KText, PressableScale } from '@/components/ui';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { cycleSummary } from '@/lib/cycle';
 import { dayKey } from '@/lib/dates';
@@ -11,7 +11,7 @@ import { useDeviceSettings } from '@/lib/deviceSettings';
 import { dailyMessage } from '@/lib/motivation';
 import { analysisProgress, eventsByDay } from '@/lib/selectors';
 import { useKalma } from '@/lib/store';
-import { space, useTheme } from '@/theme';
+import { radius, space, touch, useTheme } from '@/theme';
 
 /** Mensaje del día: cálido, sin culpa; si ayer hubo un síntoma fuerte, es de cuidado (D71). */
 export function DailyMessageCard({ now }: { now: Date }) {
@@ -24,14 +24,12 @@ export function DailyMessageCard({ now }: { now: Date }) {
     return dailyMessage({ yesterdayMaxIntensity: max, recordedDays: analysisProgress(entries).days }, now);
   }, [entries, now]);
   if (!enabled) return null;
+  // Nota al final, sin tarjeta (D92): es un acompañamiento, no algo que haya que hacer
   return (
-    <Card tone="soft" style={{ flexDirection: 'row', gap: space[3], alignItems: 'flex-start' }}>
-      <Sun size={22} color={c.text} />
-      <View style={{ flex: 1, gap: space[1] }}>
-        <KText variant="caption" tone="muted">{msg.mood === 'care' ? 'CON CALMA' : 'PARA HOY'}</KText>
-        <KText>{msg.text}</KText>
-      </View>
-    </Card>
+    <View style={{ flexDirection: 'row', gap: space[3], alignItems: 'flex-start', paddingHorizontal: space[2], paddingVertical: space[2] }} accessible accessibilityLabel={`${msg.mood === 'care' ? 'Con calma' : 'Para hoy'}: ${msg.text}`}>
+      <Sun size={20} color={c.muted} style={{ marginTop: 2 }} />
+      <KText variant="small" tone="muted" style={{ flex: 1, fontStyle: 'italic' }}>{msg.text}</KText>
+    </View>
   );
 }
 
@@ -74,5 +72,26 @@ export function PendingSyncNote() {
       <CloudUpload size={16} color={c.muted} />
       <KText variant="small" tone="muted">{pending} {pending === 1 ? 'cambio' : 'cambios'} por subir a tu cuenta · se envían solos con internet</KText>
     </View>
+  );
+}
+
+/** Acceso rápido secundario dentro de la tarjeta de registrar (D92): ícono + texto, mismo peso entre sí. */
+export function QuickAction({ icon: Icon, label, onPress }: { icon: LucideIcon; label: string; onPress: () => void }) {
+  const { c } = useTheme();
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        // Ícono arriba del texto: los dos accesos quedan con la misma forma aunque un texto sea más largo
+        flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[1],
+        minHeight: touch.min + 24, paddingHorizontal: space[2], paddingVertical: space[3], borderRadius: radius.md,
+        backgroundColor: pressed ? c.accent : c.surfaceMuted,
+      })}
+    >
+      <Icon size={22} color={c.text} />
+      <KText variant="smallStrong" center>{label}</KText>
+    </PressableScale>
   );
 }

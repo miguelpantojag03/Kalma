@@ -51,11 +51,12 @@ export function PatternCard({ level, statement, evidence, isNew, dismissed, onPr
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={`${isNew ? 'Nuevo. ' : ''}Confianza ${PATTERN_LEVEL_LABEL[level]}. ${statement} ${evidence}.${dismissed ? ' Marcado como no útil.' : ''}`}
       accessibilityHint={onPress ? 'Abre el detalle con los números y los días' : undefined}
-      style={({ pressed }) => [
+      style={() => [
         styles.card,
         {
           backgroundColor: c.surface,
-          borderColor: isNew && !dismissed ? c.primary : 'transparent',
+          // "Nuevo" lo dice la etiqueta (D92): el borde se repetía en todas y dejaba de distinguir
+          borderColor: 'transparent',
           opacity: dismissed ? 0.6 : 1,
         },
         !dismissed && elevation(1, scheme),

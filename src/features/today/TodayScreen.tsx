@@ -16,7 +16,7 @@ import { ReliefTodayCard } from '@/features/relief/ReliefTodayCard';
 import { DayTimeline } from './DayTimeline';
 import { NewPatternCard } from './NewPatternCard';
 import { QuickSymptomSheet } from './QuickSymptomSheet';
-import { CycleTodayCard, DailyMessageCard, PendingSyncNote } from './TodayExtras';
+import { CycleTodayCard, DailyMessageCard, PendingSyncNote, QuickAction } from './TodayExtras';
 
 function greeting(d = new Date()) {
   const h = d.getHours();
@@ -74,25 +74,24 @@ export function TodayScreen() {
         />
       )}
 
-      <Card style={{ flexDirection: 'row', alignItems: 'center', gap: space[4] }}>
-        <MicButton size="nav" label="Registrar por voz" onPress={() => router.push({ pathname: '/registro', params: { auto: '1' } })} />
-        <View style={{ flex: 1, gap: space[1] }}>
-          <KText variant="subheading">Cuéntale a Kalma</KText>
-          <KText variant="small" tone="muted">Qué comiste, cómo dormiste o qué sentiste. Yo lo organizo.</KText>
+      {/* Registrar es lo principal (D92): micrófono + los dos accesos rápidos en una sola región */}
+      <Card style={{ gap: space[4] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[4] }}>
+          <MicButton size="nav" label="Registrar por voz" onPress={() => router.push({ pathname: '/registro', params: { auto: '1' } })} />
+          <View style={{ flex: 1, gap: space[1] }}>
+            <KText variant="subheading">Cuéntale a Kalma</KText>
+            <KText variant="small" tone="muted">Qué comiste, cómo dormiste o qué sentiste.</KText>
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', gap: space[2] }}>
+          <QuickAction icon={Plus} label="Me empezó un síntoma" onPress={() => setQuickOpen(true)} />
+          {/* Para una migraña en curso: pantalla oscura, sin animaciones (D73) */}
+          <QuickAction icon={Moon} label="Modo crisis" onPress={() => router.push('/crisis' as Href)} />
         </View>
       </Card>
 
-      <Button variant="secondary" fullWidth label="Me empezó un síntoma" icon={(col) => <Plus size={20} color={col} />} onPress={() => setQuickOpen(true)} />
-      {/* Para una migraña en curso: pantalla oscura, sin animaciones (D73) */}
-      <Button variant="ghost" fullWidth label="Modo crisis: pantalla oscura" icon={(col) => <Moon size={20} color={col} />} onPress={() => router.push('/crisis' as Href)} />
-
-      {/* Si anotó un síntoma hace poco: ideas para sentirse mejor mientras tanto (D90) */}
+      {/* Lo del momento: ideas si anotó un síntoma hace poco (D90) y patrón nuevo */}
       <ReliefTodayCard now={now} />
-
-      {/* Después de registrar (lo principal): el mensaje del día y el ciclo */}
-      <DailyMessageCard now={now} />
-      <CycleTodayCard />
-
       <NewPatternCard />
 
       {active && (
@@ -151,6 +150,10 @@ export function TodayScreen() {
           <DayTimeline events={todayEvents} baseDate={now} />
         </View>
       )}
+
+      {/* Lo complementario va al final (D92): el ciclo y el mensaje del día no compiten con registrar */}
+      <CycleTodayCard />
+      <DailyMessageCard now={now} />
 
       <QuickSymptomSheet open={quickOpen} onClose={() => setQuickOpen(false)} />
     </Screen>

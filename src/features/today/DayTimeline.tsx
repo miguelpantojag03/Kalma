@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useReducedMotion } from 'react-native-reanimated';
 import { parseISO } from 'date-fns';
-import { EventCard, KText, useToast } from '@/components/ui';
+import { Card, EVENT_ICON, IntensityBadge, KText, PressableScale, useToast } from '@/components/ui';
+import { EVENT_TYPE_LABEL } from '@/lib/types';
 import { formatTime, partOfDay, type PartOfDay } from '@/lib/dates';
 import { describeEvent } from '@/lib/describeEvent';
 import type { ExtractedEvent, StoredEvent } from '@/lib/schema';
 import { useKalma } from '@/lib/store';
-import { space } from '@/theme';
+import { radius, space, touch, useTheme } from '@/theme';
 import { EventEditorSheet } from '@/features/recording/EventEditorSheet';
 
 const ORDER: PartOfDay[] = ['madrugada', 'mañana', 'tarde', 'noche'];
@@ -19,6 +20,7 @@ const TITLE: Record<PartOfDay, string> = { madrugada: 'Madrugada', mañana: 'Ma�
  */
 export function DayTimeline({ events, baseDate }: { events: StoredEvent[]; baseDate: Date }) {
   const reduce = useReducedMotion();
+  const { c } = useTheme();
   const { updateEvent, removeEvent, undoRemove } = useKalma();
   const showToast = useToast((s) => s.show);
   const [editing, setEditing] = useState<StoredEvent | null>(null);
@@ -30,22 +32,18 @@ export function DayTimeline({ events, baseDate }: { events: StoredEvent[]; baseD
       {groups.map(({ p, items }) => (
         <View key={p} style={{ gap: space[3] }} accessibilityRole="list" accessibilityLabel={`${TITLE[p]}, ${items.length} ${items.length === 1 ? 'registro' : 'registros'}`}>
           <KText variant="subheading" tone="muted">{TITLE[p]}</KText>
-          {items.map((e) => {
-            const d = describeEvent(e);
-            return (
-              <Animated.View key={e.id} entering={reduce ? undefined : FadeIn.duration(250)} layout={reduce ? undefined : LinearTransition}>
-                <EventCard
-                  type={e.type}
-                  title={d.title}
-                  detail={d.detail}
-                  time={e.occurred_at ? formatTime(e.occurred_at) : undefined}
-                  intensity={d.intensity}
-                  edited={e.edited}
-                  onPress={() => setEditing(e)}
-                />
-              </Animated.View>
-            );
-          })}
+          {/* Una tarjeta por momento del día con filas (D92): antes, una tarjeta con sombra por registro */}
+          <Card style={{ paddingVertical: space[1], paddingHorizontal: 0 }}>
+            {items.map((e, i) => {
+              const d = describeEvent(e);
+              return (
+                <Animated.View key={e.id} entering={reduce ? undefined : FadeIn.duration(250)} layout={reduce ? undefined : LinearTransition}>
+                  {i > 0 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.border, marginLeft: space[4] + 40 + space[3] }} />}
+                  <EventRow event={e} title={d.title} detail={d.detail} intensity={d.intensity} onPress={() => setEditing(e)} />
+                </Animated.View>
+              );
+            })}
+          </Card>
         </View>
       ))}
 
@@ -67,5 +65,37 @@ export function DayTimeline({ events, baseDate }: { events: StoredEvent[]; baseD
         }}
       />
     </View>
+  );
+}
+
+/** Fila de un registro dentro del día: ícono, qué fue, cuándo y (si es síntoma) la intensidad. */
+function EventRow({ event: e, title, detail, intensity, onPress }: { event: StoredEvent; title: string; detail?: string; intensity?: number; onPress: () => void }) {
+  const { c } = useTheme();
+  const Icon = EVENT_ICON[e.type];
+  const time = e.occurred_at ? formatTime(e.occurred_at) : undefined;
+  const meta = [time, detail].filter(Boolean).join(' · ');
+  const symptom = e.type === 'symptom';
+  return (
+    <PressableScale
+      weight="card"
+      accessibilityRole="button"
+      accessibilityLabel={[`${EVENT_TYPE_LABEL[e.type]}: ${title}`, meta, intensity !== undefined ? `intensidad ${intensity} de 10` : null, e.edited ? 'editado por ti' : null].filter(Boolean).join('. ')}
+      accessibilityHint="Toca para corregir o quitar"
+      onPress={onPress}
+      style={({ pressed }) => ({
+        flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: touch.min + 16,
+        paddingHorizontal: space[4], paddingVertical: space[3], borderRadius: radius.md,
+        backgroundColor: pressed ? c.surfaceMuted : 'transparent',
+      })}
+    >
+      <View style={{ width: 40, height: 40, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: symptom ? c.intensity[3] : c.accent }}>
+        <Icon size={20} strokeWidth={2.25} color={symptom ? c.onIntensity : c.text} />
+      </View>
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+        <KText variant="bodyStrong" numberOfLines={2}>{title}</KText>
+        {!!meta && <KText variant="small" tone="muted" numberOfLines={2}>{meta}</KText>}
+      </View>
+      {intensity !== undefined && <IntensityBadge value={intensity} />}
+    </PressableScale>
   );
 }

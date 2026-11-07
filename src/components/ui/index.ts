@@ -22,3 +22,4 @@ export * from './PasswordField';
 export * from './ListRow';
 export * from './Material';
 export * from './PressableScale';
+export * from './SegmentedControl';

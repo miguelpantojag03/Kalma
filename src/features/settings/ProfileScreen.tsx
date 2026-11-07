@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Switch, View } from 'react-native';
 import { router, type Href } from 'expo-router';
-import { Bell, BellRing, CircleHelp, ClipboardList, Droplet, Download, FileText, FlaskConical, HeartPulse, KeyRound, LogOut, Moon, Palette, RotateCcw, ShieldCheck, Smartphone, Sparkles, Stethoscope, Sun, Trash, UserRound, Utensils } from 'lucide-react-native';
+import { Bell, BellRing, CircleHelp, ClipboardList, Droplet, Download, FileText, FlaskConical, HeartPulse, KeyRound, LogOut, Moon, Palette, RotateCcw, ShieldCheck, Smartphone, Stethoscope, Sun, Trash, UserRound, Utensils, WifiOff } from 'lucide-react-native';
 import {
-  Banner, BottomSheet, Button, Card, Chip, ChipGroup, KText, ListRow, PasswordField, PasswordRequirements, PermissionPrompt, TextField, useToast,
+  Banner, BottomSheet, Button, Card, KText, ListRow, PasswordField, PasswordRequirements, PermissionPrompt, SegmentedControl, TextField, useToast,
 } from '@/components/ui';
 import { Screen } from '@/components/Screen';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -17,7 +17,7 @@ import { isValidName, isValidPassword, nameError, passwordError } from '@/lib/va
 import { space, useTheme, useThemePref, type ThemePref } from '@/theme';
 
 const THEMES: { value: ThemePref; label: string; Icon: typeof Sun }[] = [
-  { value: 'system', label: 'Como el celular', Icon: Smartphone },
+  { value: 'system', label: 'Automático', Icon: Smartphone },
   { value: 'light', label: 'Claro', Icon: Sun },
   { value: 'dark', label: 'Oscuro', Icon: Moon },
 ];
@@ -128,26 +128,33 @@ export function ProfileScreen() {
       )}
 
       {status === 'demo' && (
-        <Card style={{ gap: space[3] }}>
-          <KText variant="subheading">Demo</KText>
-          <KText variant="small" tone="muted">Estás viendo datos de ejemplo de Laura ({days} días). Nada de esto se guarda en una cuenta.</KText>
-          <Button variant="secondary" fullWidth label="Reiniciar la demo" icon={(c) => <RotateCcw size={20} color={c} />} onPress={() => setSheet('resetDemo')} />
-          <Button variant="secondary" fullWidth label="Enviar el check-in en 5 segundos" icon={(c) => <Bell size={20} color={c} />} onPress={sendCheckin} />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 48 }}>
-            <KText style={{ flex: 1 }}>Simular sin conexión</KText>
-            <Switch
-              accessibilityLabel="Simular sin conexión"
-              value={simulateOffline}
-              onValueChange={setSimulateOffline}
-              trackColor={{ true: theme.c.primaryStrong, false: theme.c.borderStrong }}
-              thumbColor={theme.c.surface}
-            />
+        <>
+          {/* Mismo patrón de filas que el resto de Perfil (D92): antes eran 6 controles de 3 estilos */}
+          <View style={{ gap: space[1] }}>
+            <KText variant="heading">Demo</KText>
+            <KText variant="small" tone="muted">Datos de ejemplo de Laura ({days} días). Nada se guarda en una cuenta.</KText>
           </View>
-          <Button fullWidth label="Crear mi cuenta" icon={(c) => <Sparkles size={20} color={c} />} onPress={async () => { await exitDemo(); router.push('/crear-cuenta'); }} />
-          {/* Herramienta para presentar el proyecto: solo en la demo, nunca con una cuenta real */}
-          <Button variant="ghost" fullWidth label="Ver el design system" icon={(c) => <Palette size={20} color={c} />} onPress={() => router.push('/design-system')} />
-          <Button variant="ghost" fullWidth label="Salir de la demo" onPress={exitDemo} />
-        </Card>
+          <Card style={{ gap: space[1] }}>
+            <ListRow icon={RotateCcw} label="Reiniciar la demo" description="Vuelve a cargar los datos de Laura." onPress={() => setSheet('resetDemo')} />
+            <ListRow icon={Bell} label="Probar el check-in" description="Llega una notificación en 5 segundos." onPress={sendCheckin} />
+            <ListRow
+              icon={WifiOff}
+              label="Simular sin conexión"
+              trailing={
+                <Switch
+                  accessibilityLabel="Simular sin conexión"
+                  value={simulateOffline}
+                  onValueChange={setSimulateOffline}
+                  trackColor={{ true: theme.c.primaryStrong, false: theme.c.borderStrong }}
+                  thumbColor={theme.c.surface}
+                />
+              }
+            />
+            {/* Herramienta para presentar el proyecto: solo en la demo, nunca con una cuenta real */}
+            <ListRow icon={Palette} label="Ver el design system" onPress={() => router.push('/design-system')} />
+            <ListRow icon={LogOut} label="Salir de la demo" onPress={exitDemo} />
+          </Card>
+        </>
       )}
 
       <KText variant="heading" style={{ marginTop: space[2] }}>Tu Kalma</KText>
@@ -168,12 +175,14 @@ export function ProfileScreen() {
         <ListRow icon={CircleHelp} label="Ayuda y preguntas frecuentes" onPress={() => router.push('/ayuda' as Href)} />
       </Card>
 
-      <Card>
-        <ChipGroup label="Apariencia">
-          {THEMES.map(({ value, label, Icon }) => (
-            <Chip key={value} label={label} selected={pref === value} onPress={() => setPref(value)} icon={(color) => <Icon size={16} color={color} />} />
-          ))}
-        </ChipGroup>
+      <Card style={{ gap: space[3] }}>
+        <KText variant="subheading">Apariencia</KText>
+        <SegmentedControl
+          label="Apariencia"
+          value={pref}
+          onChange={setPref}
+          options={THEMES.map(({ value, label }) => ({ value, label }))}
+        />
       </Card>
 
 

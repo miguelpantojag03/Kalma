@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import { router, Stack, useLocalSearchParams, type Href } from 'expo-router';
-import { FileText, Phone, Sparkles, Smartphone } from 'lucide-react-native';
+import { ChevronRight, FileText, Phone, Sparkles, Smartphone } from 'lucide-react-native';
 import { Banner, Button, Card, Chip, ChipGroup, EmptyState, KText } from '@/components/ui';
 import { Screen } from '@/components/Screen';
 import { chooseRelief, type Engine } from '@/lib/ai';
@@ -136,7 +136,16 @@ export function ReliefScreen() {
             <KText variant="bodyStrong" style={{ flex: 1 }}>Va en tu reporte para el médico</KText>
           </View>
           <KText variant="small">Lo que pruebes y si te ayudó aparece en tu reporte, junto con tus síntomas. Así tu médico sabe qué has intentado.</KText>
-          <Button variant="ghost" label="Ver mi reporte" onPress={() => router.push('/reporte' as Href)} />
+          {/* Mismo patrón de enlace que "Ver detalle" y "Ver el experimento" (D92) */}
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => router.push('/reporte' as Href)}
+            hitSlop={8}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-end', gap: space[1], minHeight: 44, opacity: pressed ? 0.6 : 1 })}
+          >
+            <KText variant="smallStrong" style={{ textDecorationLine: 'underline' }}>Ver mi reporte</KText>
+            <ChevronRight size={20} color={c.text} />
+          </Pressable>
         </Card>
 
         <KText variant="caption" tone="muted">
